@@ -1,7 +1,7 @@
 use super::{
     ast::{
-        BinaryExpression, ConstStatement, Expression, IdentifierExpression, LetStatement,
-        NoneLiteralExpression, NumericLiteralExpression, Program, Statement,
+        AssignmentExpression, BinaryExpression, ConstStatement, Expression, IdentifierExpression,
+        LetStatement, NoneLiteralExpression, NumericLiteralExpression, Program, Statement,
     },
     token::{BinaryOperator, Token, TokenKind},
     utils::Error,
@@ -73,7 +73,30 @@ fn parse_expression(
     tokens: &[Token],
     current_token_index: usize,
 ) -> Result<(Expression, usize), Error> {
-    parse_binary_expression(tokens, current_token_index)
+    parse_assignment_expression(tokens, current_token_index)
+}
+
+fn parse_assignment_expression(
+    tokens: &[Token],
+    current_token_index: usize,
+) -> Result<(Expression, usize), Error> {
+    if tokens.get(current_token_index + 1).is_some()
+        && tokens[current_token_index].kind == TokenKind::Identifier
+        && tokens[current_token_index + 1].kind == TokenKind::Equal
+    {
+        let (identifier, current_token_index) =
+            expect_to_match(tokens, current_token_index, TokenKind::Identifier)?;
+        let (_, current_token_index) =
+            expect_to_match(tokens, current_token_index, TokenKind::Equal)?;
+        let (expression, current_token_index) =
+            parse_assignment_expression(tokens, current_token_index)?;
+        Ok((
+            Expression::Assignment(AssignmentExpression::new(identifier, expression)),
+            current_token_index,
+        ))
+    } else {
+        parse_binary_expression(tokens, current_token_index)
+    }
 }
 
 fn parse_binary_expression(
@@ -197,12 +220,12 @@ fn expect_to_match(
 mod tests {
     use crate::frontend::{
         ast::{
-            BinaryExpression, ConstStatement, Expression, IdentifierExpression, LetStatement,
-            NumericLiteralExpression, Statement,
+            AssignmentExpression, BinaryExpression, ConstStatement, Expression,
+            IdentifierExpression, LetStatement, NumericLiteralExpression, Statement,
         },
         parser::{
-            parse_binary_expression, parse_const_statement, parse_let_statement,
-            parse_primary_expression,
+            parse_assignment_expression, parse_binary_expression, parse_const_statement,
+            parse_let_statement, parse_primary_expression,
         },
         token::{BinaryOperator, Token, TokenKind},
         tokenizer::tokenize,
@@ -248,6 +271,24 @@ mod tests {
         );
         let tokens = tokenize(source_code).unwrap();
         let output = parse_const_statement(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_assignment_expression() {
+        let source_code = "a = 2.5";
+        let expected_output = (
+            Expression::Assignment(AssignmentExpression::new(
+                Token::new(TokenKind::Identifier, "a".to_string(), TextSpan::new(0, 1)),
+                Expression::Numeric(NumericLiteralExpression::new(
+                    Token::new(TokenKind::Number, "2.5".to_string(), TextSpan::new(4, 7)),
+                    2.5,
+                )),
+            )),
+            3,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_assignment_expression(&tokens, 0).unwrap();
         assert_eq!(expected_output, output);
     }
 

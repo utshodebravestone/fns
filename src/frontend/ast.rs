@@ -56,10 +56,6 @@ impl ConstStatement {
             expression,
         }
     }
-
-    pub fn text_span(&self) -> TextSpan {
-        TextSpan::add(self.keyword.text_span.clone(), self.expression.text_span())
-    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -68,6 +64,7 @@ pub enum Expression {
     Numeric(NumericLiteralExpression),
     Identifier(IdentifierExpression),
     Binary(BinaryExpression),
+    Assignment(AssignmentExpression),
 }
 
 impl Expression {
@@ -77,7 +74,30 @@ impl Expression {
             Expression::Numeric(n) => n.number.text_span.clone(),
             Expression::Identifier(i) => i.identifier.text_span.clone(),
             Expression::Binary(b) => TextSpan::add(b.left.text_span(), b.right.text_span()),
+            Expression::Assignment(a) => a.text_span(),
         }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AssignmentExpression {
+    pub identifier: Token,
+    pub expression: Box<Expression>,
+}
+
+impl AssignmentExpression {
+    pub fn new(identifier: Token, expression: Expression) -> Self {
+        Self {
+            identifier,
+            expression: Box::new(expression),
+        }
+    }
+
+    pub fn text_span(&self) -> TextSpan {
+        TextSpan::add(
+            self.identifier.text_span.clone(),
+            self.expression.text_span(),
+        )
     }
 }
 

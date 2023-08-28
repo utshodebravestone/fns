@@ -32,7 +32,7 @@ fn evaluate_let_statement(
     environment: &mut Environment,
 ) -> Result<Value, Error> {
     let value = evaluate_expression(&statement.expression, environment)?;
-    environment.define(statement.identifier.lexeme, value);
+    environment.define(statement.identifier.lexeme, value, false);
     Ok(Value::None)
 }
 
@@ -41,21 +41,14 @@ fn evaluate_const_statement(
     environment: &mut Environment,
 ) -> Result<Value, Error> {
     let value = evaluate_expression(&statement.expression, environment)?;
-    if environment.access(&statement.identifier.lexeme).is_some() {
-        Err(Error::new(
-            format!(
-                "Can't shadow the constant '{}'",
-                statement.identifier.lexeme
-            ),
-            statement.text_span(),
-        ))
-    } else {
-        environment.define(statement.identifier.lexeme, value);
-        Ok(Value::None)
-    }
+    environment.define(statement.identifier.lexeme, value, true);
+    Ok(Value::None)
 }
 
-fn evaluate_expression(expression: &Expression, environment: &Environment) -> Result<Value, Error> {
+fn evaluate_expression(
+    expression: &Expression,
+    environment: &mut Environment,
+) -> Result<Value, Error> {
     match expression {
         Expression::None(_) => Ok(Value::None),
         Expression::Numeric(n) => Ok(Value::Number(n.value)),
@@ -112,6 +105,31 @@ fn evaluate_expression(expression: &Expression, environment: &Environment) -> Re
                 )),
             }
         }
+        Expression::Assignment(a) => {
+            if let Some(is_constant) = environment.is_constant(&a.identifier.lexeme) {
+                if is_constant {
+                    Err(Error::new(
+                        format!(
+                            "Can't assign the variable '{}' as it's a constant",
+                            a.identifier.lexeme
+                        ),
+                        a.text_span(),
+                    ))
+                } else {
+                    let value = evaluate_expression(&a.expression, environment)?;
+                    environment.define(a.identifier.lexeme.clone(), value.clone(), false);
+                    Ok(value)
+                }
+            } else {
+                Err(Error::new(
+                    format!(
+                        "Can't assign to the variable '{}' as it's not defined",
+                        a.identifier.lexeme
+                    ),
+                    a.text_span(),
+                ))
+            }
+        }
     }
 }
 
@@ -159,15 +177,32 @@ mod tests {
     }
 
     #[test]
-    fn test_evaluate_const_statement_shadowing() {
-        let src = "let E = 2.71";
+    fn test_evaluate_assignment_expression_with_let() {
+        let src = "let a = 2.71";
         let expected_value = Value::None;
         let tokens = tokenize(src).unwrap();
         let program = parse(tokens).unwrap();
         let (val, env) = evaluate(program, None).unwrap();
         assert_eq!(val, expected_value);
 
-        let src = "const E = 2.71";
+        let src = "a = 5";
+        let expected_value = Value::Number(5.);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, Some(env)).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_assignment_expression_with_const() {
+        let src = "const a = 2.71";
+        let expected_value = Value::None;
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, env) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+
+        let src = "a = 5";
         let tokens = tokenize(src).unwrap();
         let program = parse(tokens).unwrap();
         assert!(evaluate(program, Some(env)).is_err());

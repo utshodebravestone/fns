@@ -1,0 +1,7 @@
+let a = 5
+a = 10
+
+// But can't do the same in the case of 'const' binding
+// i.e:
+// 'const a = 5'
+// 'a = 10' is not  valid

@@ -1,4 +1,5 @@
 let a = 5
 let a = 10
 
-// Only can shadow 'let' bindings and throws an error if tried to shadow 'const'.
+const a = 15
+const a = 20
