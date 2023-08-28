@@ -1,5 +1,5 @@
 use crate::frontend::{
-    ast::{Expression, LetStatement, Program, Statement},
+    ast::{ConstStatement, Expression, LetStatement, Program, Statement},
     token::{BinaryOperator, TokenKind},
     utils::Error,
 };
@@ -22,6 +22,7 @@ pub fn evaluate(
 fn evaluate_statement(statement: Statement, environment: &mut Environment) -> Result<Value, Error> {
     match statement {
         Statement::Let(l) => evaluate_let_statement(l, environment),
+        Statement::Const(c) => evaluate_const_statement(c, environment),
         Statement::Expression(e) => evaluate_expression(&e, environment),
     }
 }
@@ -33,6 +34,25 @@ fn evaluate_let_statement(
     let value = evaluate_expression(&statement.expression, environment)?;
     environment.define(statement.identifier.lexeme, value);
     Ok(Value::None)
+}
+
+fn evaluate_const_statement(
+    statement: ConstStatement,
+    environment: &mut Environment,
+) -> Result<Value, Error> {
+    let value = evaluate_expression(&statement.expression, environment)?;
+    if environment.access(&statement.identifier.lexeme).is_some() {
+        Err(Error::new(
+            format!(
+                "Can't shadow the constant '{}'",
+                statement.identifier.lexeme
+            ),
+            statement.text_span(),
+        ))
+    } else {
+        environment.define(statement.identifier.lexeme, value);
+        Ok(Value::None)
+    }
 }
 
 fn evaluate_expression(expression: &Expression, environment: &Environment) -> Result<Value, Error> {
@@ -105,7 +125,7 @@ mod tests {
     use super::evaluate;
 
     #[test]
-    fn test_evaluate_let_statement_and_identifier_expression() {
+    fn test_evaluate_let_statement() {
         let src = "let a = 2.71";
         let expected_value = Value::None;
         let tokens = tokenize(src).unwrap();
@@ -119,6 +139,38 @@ mod tests {
         let program = parse(tokens).unwrap();
         let (val, _) = evaluate(program, Some(env)).unwrap();
         assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_const_statement() {
+        let src = "let E = 2.71";
+        let expected_value = Value::None;
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, env) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+
+        let src = "E";
+        let expected_value = Value::Number(2.71);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, Some(env)).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_const_statement_shadowing() {
+        let src = "let E = 2.71";
+        let expected_value = Value::None;
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, env) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+
+        let src = "const E = 2.71";
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        assert!(evaluate(program, Some(env)).is_err());
     }
 
     #[test]

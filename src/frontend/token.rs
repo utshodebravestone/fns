@@ -30,6 +30,7 @@ pub enum TokenKind {
     Identifier,
 
     Let,
+    Const,
     None,
 
     OpenParen,
@@ -44,6 +45,7 @@ impl TokenKind {
     pub fn get_lexeme_type(lexeme: &str) -> Self {
         match lexeme {
             "let" => TokenKind::Let,
+            "const" => TokenKind::Const,
             "none" => TokenKind::None,
             _ => TokenKind::Identifier,
         }
@@ -60,6 +62,7 @@ impl fmt::Display for TokenKind {
             TokenKind::Identifier => write!(f, "IDENTIFIER"),
 
             TokenKind::Let => write!(f, "let"),
+            TokenKind::Const => write!(f, "const"),
             TokenKind::None => write!(f, "none"),
 
             TokenKind::OpenParen => write!(f, "("),

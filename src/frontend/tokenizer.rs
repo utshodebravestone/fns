@@ -135,6 +135,27 @@ mod tests {
     }
 
     #[test]
+    fn test_tokenize_for_keywords() {
+        let source_code = "let const none";
+        let expected_tokens = vec![
+            Token::new(TokenKind::Let, "let".to_string(), TextSpan::new(0, 3)),
+            Token::new(TokenKind::Const, "const".to_string(), TextSpan::new(4, 9)),
+            Token::new(TokenKind::None, "none".to_string(), TextSpan::new(10, 14)),
+            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(14, 15)),
+        ];
+        let tokens = tokenize(source_code).unwrap();
+        assert_eq!(tokens, expected_tokens);
+        for i in 0..expected_tokens.len() - 1 {
+            let token = &tokens[i];
+            assert_eq!(
+                token.lexeme,
+                source_code[token.text_span.starting_index..token.text_span.ending_index]
+                    .to_string()
+            );
+        }
+    }
+
+    #[test]
     fn test_tokenize_for_single_character_tokens() {
         let source_code = "=(+-*/)";
         let expected_tokens = vec![

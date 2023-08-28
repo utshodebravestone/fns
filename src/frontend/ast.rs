@@ -6,19 +6,23 @@ pub type Number = f64;
 #[derive(Debug, PartialEq)]
 pub enum Statement {
     Let(LetStatement),
+    Const(ConstStatement),
     Expression(Expression),
 }
 
-impl Statement {
-    pub fn text_span(&self) -> TextSpan {
-        match self {
-            Statement::Let(ls) => {
-                TextSpan::add(ls.keyword.text_span.clone(), ls.expression.text_span())
-            }
-            Statement::Expression(e) => e.text_span(),
-        }
-    }
-}
+// impl Statement {
+//     pub fn text_span(&self) -> TextSpan {
+//         match self {
+//             Statement::Let(ls) => {
+//                 TextSpan::add(ls.keyword.text_span.clone(), ls.expression.text_span())
+//             }
+//             Statement::Const(cs) => {
+//                 cs.text_span(),
+//             }
+//             Statement::Expression(e) => e.text_span(),
+//         }
+//     }
+// }
 
 #[derive(Debug, PartialEq)]
 pub struct LetStatement {
@@ -36,6 +40,28 @@ impl LetStatement {
         }
     }
 }
+
+#[derive(Debug, PartialEq)]
+pub struct ConstStatement {
+    pub keyword: Token,
+    pub identifier: Token,
+    pub expression: Expression,
+}
+
+impl ConstStatement {
+    pub fn new(keyword: Token, identifier: Token, expression: Expression) -> Self {
+        Self {
+            keyword,
+            identifier,
+            expression,
+        }
+    }
+
+    pub fn text_span(&self) -> TextSpan {
+        TextSpan::add(self.keyword.text_span.clone(), self.expression.text_span())
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     None(NoneLiteralExpression),

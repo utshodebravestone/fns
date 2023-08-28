@@ -1,7 +1,7 @@
 use super::{
     ast::{
-        BinaryExpression, Expression, IdentifierExpression, LetStatement, NoneLiteralExpression,
-        NumericLiteralExpression, Program, Statement,
+        BinaryExpression, ConstStatement, Expression, IdentifierExpression, LetStatement,
+        NoneLiteralExpression, NumericLiteralExpression, Program, Statement,
     },
     token::{BinaryOperator, Token, TokenKind},
     utils::Error,
@@ -29,6 +29,7 @@ fn parse_statement(
 ) -> Result<(Statement, usize), Error> {
     match tokens[current_token_index].kind {
         TokenKind::Let => parse_let_statement(tokens, current_token_index),
+        TokenKind::Const => parse_const_statement(tokens, current_token_index),
         _ => {
             let (expression, current_token_index) = parse_expression(tokens, current_token_index)?;
             Ok((Statement::Expression(expression), current_token_index))
@@ -48,6 +49,22 @@ fn parse_let_statement(
     let (expression, current_token_index) = parse_expression(tokens, current_token_index)?;
     Ok((
         Statement::Let(LetStatement::new(keyword, identifier, expression)),
+        current_token_index,
+    ))
+}
+
+fn parse_const_statement(
+    tokens: &[Token],
+    current_token_index: usize,
+) -> Result<(Statement, usize), Error> {
+    let (keyword, current_token_index) =
+        expect_to_match(tokens, current_token_index, TokenKind::Const)?;
+    let (identifier, current_token_index) =
+        expect_to_match(tokens, current_token_index, TokenKind::Identifier)?;
+    let (_, current_token_index) = expect_to_match(tokens, current_token_index, TokenKind::Equal)?;
+    let (expression, current_token_index) = parse_expression(tokens, current_token_index)?;
+    Ok((
+        Statement::Const(ConstStatement::new(keyword, identifier, expression)),
         current_token_index,
     ))
 }
@@ -180,10 +197,13 @@ fn expect_to_match(
 mod tests {
     use crate::frontend::{
         ast::{
-            BinaryExpression, Expression, IdentifierExpression, LetStatement,
+            BinaryExpression, ConstStatement, Expression, IdentifierExpression, LetStatement,
             NumericLiteralExpression, Statement,
         },
-        parser::{parse_binary_expression, parse_let_statement, parse_primary_expression},
+        parser::{
+            parse_binary_expression, parse_const_statement, parse_let_statement,
+            parse_primary_expression,
+        },
         token::{BinaryOperator, Token, TokenKind},
         tokenizer::tokenize,
         utils::TextSpan,
@@ -205,6 +225,29 @@ mod tests {
         );
         let tokens = tokenize(source_code).unwrap();
         let output = parse_let_statement(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_const_statement() {
+        let source_code = "const PI = 3.14159";
+        let expected_output = (
+            Statement::Const(ConstStatement::new(
+                Token::new(TokenKind::Const, "const".to_string(), TextSpan::new(0, 5)),
+                Token::new(TokenKind::Identifier, "PI".to_string(), TextSpan::new(6, 8)),
+                Expression::Numeric(NumericLiteralExpression::new(
+                    Token::new(
+                        TokenKind::Number,
+                        "3.14159".to_string(),
+                        TextSpan::new(11, 18),
+                    ),
+                    3.14159,
+                )),
+            )),
+            4,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_const_statement(&tokens, 0).unwrap();
         assert_eq!(expected_output, output);
     }
 
