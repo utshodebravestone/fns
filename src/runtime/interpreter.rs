@@ -10,7 +10,7 @@ pub fn evaluate(
     program: Program,
     parent: Option<Environment>,
 ) -> Result<(Value, Environment), Error> {
-    let mut value = Value::Number(0.);
+    let mut value = Value::None;
     let mut environment = Environment::new(parent);
 
     for statement in program {

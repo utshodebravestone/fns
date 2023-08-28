@@ -54,11 +54,22 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                 source_code[starting_index..current_index].iter().collect(),
                 TextSpan::new(starting_index, current_index),
             )),
-            '/' => tokens.push(Token::new(
-                TokenKind::BinaryOperator(BinaryOperator::Slash),
-                source_code[starting_index..current_index].iter().collect(),
-                TextSpan::new(starting_index, current_index),
-            )),
+            '/' => {
+                if source_code.get(current_index).is_some() && source_code[current_index] == '/' {
+                    while current_index < source_code.len()
+                        && source_code[current_index] != '\n'
+                        && source_code[current_index] != '\0'
+                    {
+                        current_index += 1;
+                    }
+                } else {
+                    tokens.push(Token::new(
+                        TokenKind::BinaryOperator(BinaryOperator::Slash),
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                }
+            }
 
             _ => {
                 if current_char.is_alphabetic() || current_char == '_' {
@@ -135,7 +146,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_for_keywords() {
+    fn test_tokenize_with_keywords() {
         let source_code = "let const none";
         let expected_tokens = vec![
             Token::new(TokenKind::Let, "let".to_string(), TextSpan::new(0, 3)),
@@ -156,7 +167,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_for_single_character_tokens() {
+    fn test_tokenize_with_single_character_tokens() {
         let source_code = "=(+-*/)";
         let expected_tokens = vec![
             Token::new(TokenKind::Equal, "=".to_string(), TextSpan::new(0, 1)),
@@ -223,6 +234,26 @@ mod tests {
             TokenKind::Eof,
             "\0".to_string(),
             TextSpan::new(7, 8),
+        )];
+        let tokens = tokenize(source_code).unwrap();
+        assert_eq!(tokens, expected_tokens);
+        for i in 0..expected_tokens.len() - 1 {
+            let token = &tokens[i];
+            assert_eq!(
+                token.lexeme,
+                source_code[token.text_span.starting_index..token.text_span.ending_index]
+                    .to_string()
+            );
+        }
+    }
+
+    #[test]
+    fn test_tokenize_with_comment() {
+        let source_code = "// this is a comment";
+        let expected_tokens = vec![Token::new(
+            TokenKind::Eof,
+            "\0".to_string(),
+            TextSpan::new(20, 21),
         )];
         let tokens = tokenize(source_code).unwrap();
         assert_eq!(tokens, expected_tokens);
