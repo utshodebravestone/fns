@@ -1,8 +1,8 @@
 use super::{
     ast::{
-        AssignmentExpression, BinaryExpression, ConstStatement, Expression, IdentifierExpression,
-        LetStatement, NoneLiteralExpression, NumericLiteralExpression, Program, Statement,
-        UnaryExpression,
+        AssignmentExpression, BinaryExpression, BooleanLiteralExpression, ConstStatement,
+        Expression, IdentifierExpression, LetStatement, NoneLiteralExpression,
+        NumericLiteralExpression, Program, Statement, UnaryExpression,
     },
     token::{Token, TokenKind},
     utils::Error,
@@ -187,6 +187,20 @@ fn parse_primary_expression(
             )),
             current_token_index + 1,
         )),
+        TokenKind::True => Ok((
+            Expression::Boolean(BooleanLiteralExpression::new(
+                tokens[current_token_index].clone(),
+                true,
+            )),
+            current_token_index + 1,
+        )),
+        TokenKind::False => Ok((
+            Expression::Boolean(BooleanLiteralExpression::new(
+                tokens[current_token_index].clone(),
+                false,
+            )),
+            current_token_index + 1,
+        )),
         TokenKind::Number => Ok((
             Expression::Numeric(NumericLiteralExpression::new(
                 tokens[current_token_index].clone(),
@@ -237,8 +251,8 @@ fn eat_token(tokens: &[Token], current_token_index: usize) -> (Token, usize) {
 mod tests {
     use crate::frontend::{
         ast::{
-            AssignmentExpression, BinaryExpression, ConstStatement, Expression,
-            IdentifierExpression, LetStatement, NumericLiteralExpression, Statement,
+            AssignmentExpression, BinaryExpression, BooleanLiteralExpression, ConstStatement,
+            Expression, IdentifierExpression, LetStatement, NumericLiteralExpression, Statement,
             UnaryExpression,
         },
         parser::{
@@ -392,6 +406,36 @@ mod tests {
                 TextSpan::new(1, 2),
             ))),
             3,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_primary_expression(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_primary_boolean_true_expression() {
+        let source_code = "true";
+        let expected_output = (
+            Expression::Boolean(BooleanLiteralExpression::new(
+                Token::new(TokenKind::True, "true".to_string(), TextSpan::new(0, 4)),
+                true,
+            )),
+            1,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_primary_expression(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_primary_boolean_false_expression() {
+        let source_code = "false";
+        let expected_output = (
+            Expression::Boolean(BooleanLiteralExpression::new(
+                Token::new(TokenKind::False, "false".to_string(), TextSpan::new(0, 5)),
+                false,
+            )),
+            1,
         );
         let tokens = tokenize(source_code).unwrap();
         let output = parse_primary_expression(&tokens, 0).unwrap();

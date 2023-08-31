@@ -47,6 +47,7 @@ impl ConstStatement {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     None(NoneLiteralExpression),
+    Boolean(BooleanLiteralExpression),
     Numeric(NumericLiteralExpression),
     Identifier(IdentifierExpression),
     Unary(UnaryExpression),
@@ -58,6 +59,7 @@ impl Expression {
     pub fn text_span(&self) -> TextSpan {
         match self {
             Expression::None(n) => n.text_span(),
+            Expression::Boolean(b) => b.text_span(),
             Expression::Numeric(n) => n.text_span(),
             Expression::Identifier(i) => i.text_span(),
             Expression::Unary(u) => u.text_span(),
@@ -157,6 +159,22 @@ impl NumericLiteralExpression {
 
     pub fn text_span(&self) -> TextSpan {
         self.number.text_span.clone()
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct BooleanLiteralExpression {
+    pub boolean: Token,
+    pub value: bool,
+}
+
+impl BooleanLiteralExpression {
+    pub fn new(boolean: Token, value: bool) -> Self {
+        Self { boolean, value }
+    }
+
+    pub fn text_span(&self) -> TextSpan {
+        self.boolean.text_span.clone()
     }
 }
 

@@ -147,12 +147,14 @@ mod tests {
 
     #[test]
     fn test_tokenize_with_keywords() {
-        let source_code = "let const none";
+        let source_code = "let const true false none";
         let expected_tokens = vec![
             Token::new(TokenKind::Let, "let".to_string(), TextSpan::new(0, 3)),
             Token::new(TokenKind::Const, "const".to_string(), TextSpan::new(4, 9)),
-            Token::new(TokenKind::None, "none".to_string(), TextSpan::new(10, 14)),
-            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(14, 15)),
+            Token::new(TokenKind::True, "true".to_string(), TextSpan::new(10, 14)),
+            Token::new(TokenKind::False, "false".to_string(), TextSpan::new(15, 20)),
+            Token::new(TokenKind::None, "none".to_string(), TextSpan::new(21, 25)),
+            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(25, 26)),
         ];
         let tokens = tokenize(source_code).unwrap();
         assert_eq!(tokens, expected_tokens);

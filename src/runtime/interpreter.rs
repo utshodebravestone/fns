@@ -51,6 +51,7 @@ fn evaluate_expression(
 ) -> Result<Value, Error> {
     match expression {
         Expression::None(_) => Ok(Value::None),
+        Expression::Boolean(b) => Ok(Value::Boolean(b.value)),
         Expression::Numeric(n) => Ok(Value::Number(n.value)),
         Expression::Identifier(i) => {
             if let Some(value) = environment.access(&i.identifier.lexeme) {
@@ -231,6 +232,36 @@ mod tests {
     fn test_evaluate_numeric_expression() {
         let src = "5";
         let expected_value = Value::Number(5.);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_boolean_true_expression() {
+        let src = "true";
+        let expected_value = Value::Boolean(true);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_boolean_false_expression() {
+        let src = "false";
+        let expected_value = Value::Boolean(false);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_none_expression() {
+        let src = "none";
+        let expected_value = Value::None;
         let tokens = tokenize(src).unwrap();
         let program = parse(tokens).unwrap();
         let (val, _) = evaluate(program, None).unwrap();

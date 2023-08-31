@@ -26,6 +26,7 @@ CORE_EXPRESSION = ASSIGNMENT_EXPRESSION
                                      | BINARY_EXPRESSION
                                      | UNARY_EXPRESSION
                                      | NUMERIC_EXPRESSION
+                                     | BOOLEAN_EXPRESSION
                                      | NONE_EXPRESSION
                                      | IDENTIFIER_EXPRESSION
 
@@ -33,6 +34,7 @@ ASSIGNMENT_EXPRESSION = IDENTIFIER "=" EXPRESSION
 BINARY_EXPRESSION = EXPRESSION BINARY_OPERATOR EXPRESSION
 UNARY_EXPRESSION = UNARY_OPERATOR EXPRESSION
 NUMERIC_EXPRESSION = NUMBER
+BOOLEAN_EXPRESSION = BOOLEAN
 NONE_EXPRESSION = NONE
 IDENTIFIER_EXPRESSION = IDENTIFIER
 
@@ -40,6 +42,7 @@ IDENTIFIER_EXPRESSION = IDENTIFIER
 BINARY_OPERATOR = "+" | "-" | "*" | "/"
 UNARY_OPERATOR = "+" | "-"
 NUMBER = [0-9]+.*[0-9]*
+BOOLEAN = "true" | "false"
 NONE = "none"
 IDENTIFIER = (_*[A-Z]*[a-z]*)+
 ```

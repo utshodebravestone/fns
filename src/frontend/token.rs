@@ -12,6 +12,8 @@ pub enum TokenKind {
 
     Let,
     Const,
+    True,
+    False,
     None,
 
     OpenParen,
@@ -29,6 +31,8 @@ impl TokenKind {
         match lexeme {
             "let" => TokenKind::Let,
             "const" => TokenKind::Const,
+            "true" => TokenKind::True,
+            "false" => TokenKind::False,
             "none" => TokenKind::None,
             _ => TokenKind::Identifier,
         }
@@ -46,6 +50,8 @@ impl fmt::Display for TokenKind {
 
             TokenKind::Let => write!(f, "let"),
             TokenKind::Const => write!(f, "const"),
+            TokenKind::True => write!(f, "true"),
+            TokenKind::False => write!(f, "false"),
             TokenKind::None => write!(f, "none"),
 
             TokenKind::OpenParen => write!(f, "("),
