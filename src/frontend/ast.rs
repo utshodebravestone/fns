@@ -10,20 +10,6 @@ pub enum Statement {
     Expression(Expression),
 }
 
-// impl Statement {
-//     pub fn text_span(&self) -> TextSpan {
-//         match self {
-//             Statement::Let(ls) => {
-//                 TextSpan::add(ls.keyword.text_span.clone(), ls.expression.text_span())
-//             }
-//             Statement::Const(cs) => {
-//                 cs.text_span(),
-//             }
-//             Statement::Expression(e) => e.text_span(),
-//         }
-//     }
-// }
-
 #[derive(Debug, PartialEq)]
 pub struct LetStatement {
     pub keyword: Token,

@@ -116,7 +116,7 @@ fn parse_binary_additive_expression(
         parse_binary_multiplicative_expression(tokens, current_token_index)?;
     current_token_index = consumed_until;
     while token_matches(
-        tokens[current_token_index].kind.clone(),
+        &tokens[current_token_index].kind,
         &[TokenKind::Plus, TokenKind::Minus],
     ) {
         let operator = tokens[current_token_index].clone();
@@ -137,7 +137,7 @@ fn parse_binary_multiplicative_expression(
     let (mut left, consumed_until) = parse_unary_expression(tokens, current_token_index)?;
     current_token_index = consumed_until;
     while token_matches(
-        tokens[current_token_index].kind.clone(),
+        &tokens[current_token_index].kind,
         &[TokenKind::Asterisk, TokenKind::Slash],
     ) {
         let operator = tokens[current_token_index].clone();
@@ -154,8 +154,8 @@ fn parse_unary_expression(
     tokens: &[Token],
     current_token_index: usize,
 ) -> Result<(Expression, usize), Error> {
-    while token_matches(
-        tokens[current_token_index].kind.clone(),
+    if token_matches(
+        &tokens[current_token_index].kind,
         &[TokenKind::Plus, TokenKind::Minus],
     ) {
         let (operator, current_token_index) = eat_token(tokens, current_token_index);
@@ -207,8 +207,8 @@ fn parse_primary_expression(
     }
 }
 
-fn token_matches(token: TokenKind, expected_to_be_in: &[TokenKind]) -> bool {
-    expected_to_be_in.contains(&token)
+fn token_matches(token_kind: &TokenKind, expected_to_be_in: &[TokenKind]) -> bool {
+    expected_to_be_in.contains(token_kind)
 }
 
 fn expect_to_match(

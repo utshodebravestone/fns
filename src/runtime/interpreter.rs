@@ -61,7 +61,7 @@ fn evaluate_expression(
                         "Can't access the variable '{}' as it's not defined",
                         i.identifier.lexeme
                     ),
-                    expression.text_span(),
+                    i.text_span(),
                 ))
             }
         }
@@ -100,7 +100,7 @@ fn evaluate_expression(
 
                 (operator, left, right) => Err(Error::new(
                     format!("Can't use '{operator}' with '{left}' and '{right}'"),
-                    expression.text_span(),
+                    b.text_span(),
                 )),
             }
         }
