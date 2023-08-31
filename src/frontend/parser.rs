@@ -3,7 +3,7 @@ use super::{
         AssignmentExpression, BinaryExpression, ConstStatement, Expression, IdentifierExpression,
         LetStatement, NoneLiteralExpression, NumericLiteralExpression, Program, Statement,
     },
-    token::{BinaryOperator, Token, TokenKind},
+    token::{Token, TokenKind},
     utils::Error,
 };
 
@@ -116,10 +116,7 @@ fn parse_binary_additive_expression(
     current_token_index = consumed_until;
     while token_matches(
         tokens[current_token_index].kind.clone(),
-        &[
-            TokenKind::BinaryOperator(BinaryOperator::Plus),
-            TokenKind::BinaryOperator(BinaryOperator::Minus),
-        ],
+        &[TokenKind::Plus, TokenKind::Minus],
     ) {
         let operator = tokens[current_token_index].clone();
         current_token_index += 1;
@@ -140,10 +137,7 @@ fn parse_binary_multiplicative_expression(
     current_token_index = consumed_until;
     while token_matches(
         tokens[current_token_index].kind.clone(),
-        &[
-            TokenKind::BinaryOperator(BinaryOperator::Asterisk),
-            TokenKind::BinaryOperator(BinaryOperator::Slash),
-        ],
+        &[TokenKind::Asterisk, TokenKind::Slash],
     ) {
         let operator = tokens[current_token_index].clone();
         current_token_index += 1;
@@ -227,7 +221,7 @@ mod tests {
             parse_assignment_expression, parse_binary_expression, parse_const_statement,
             parse_let_statement, parse_primary_expression,
         },
-        token::{BinaryOperator, Token, TokenKind},
+        token::{Token, TokenKind},
         tokenizer::tokenize,
         utils::TextSpan,
     };
@@ -302,44 +296,28 @@ mod tests {
                     "a".to_string(),
                     TextSpan::new(0, 1),
                 ))),
-                Token::new(
-                    TokenKind::BinaryOperator(BinaryOperator::Plus),
-                    "+".to_string(),
-                    TextSpan::new(1, 2),
-                ),
+                Token::new(TokenKind::Plus, "+".to_string(), TextSpan::new(1, 2)),
                 Expression::Binary(BinaryExpression::new(
                     Expression::Identifier(IdentifierExpression::new(Token::new(
                         TokenKind::Identifier,
                         "b".to_string(),
                         TextSpan::new(2, 3),
                     ))),
-                    Token::new(
-                        TokenKind::BinaryOperator(BinaryOperator::Minus),
-                        "-".to_string(),
-                        TextSpan::new(3, 4),
-                    ),
+                    Token::new(TokenKind::Minus, "-".to_string(), TextSpan::new(3, 4)),
                     Expression::Binary(BinaryExpression::new(
                         Expression::Identifier(IdentifierExpression::new(Token::new(
                             TokenKind::Identifier,
                             "c".to_string(),
                             TextSpan::new(4, 5),
                         ))),
-                        Token::new(
-                            TokenKind::BinaryOperator(BinaryOperator::Asterisk),
-                            "*".to_string(),
-                            TextSpan::new(5, 6),
-                        ),
+                        Token::new(TokenKind::Asterisk, "*".to_string(), TextSpan::new(5, 6)),
                         Expression::Binary(BinaryExpression::new(
                             Expression::Identifier(IdentifierExpression::new(Token::new(
                                 TokenKind::Identifier,
                                 "d".to_string(),
                                 TextSpan::new(6, 7),
                             ))),
-                            Token::new(
-                                TokenKind::BinaryOperator(BinaryOperator::Slash),
-                                "/".to_string(),
-                                TextSpan::new(7, 8),
-                            ),
+                            Token::new(TokenKind::Slash, "/".to_string(), TextSpan::new(7, 8)),
                             Expression::Identifier(IdentifierExpression::new(Token::new(
                                 TokenKind::Identifier,
                                 "e".to_string(),

@@ -3,25 +3,6 @@ use std::fmt;
 use super::utils::TextSpan;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum BinaryOperator {
-    Plus,
-    Minus,
-    Asterisk,
-    Slash,
-}
-
-impl fmt::Display for BinaryOperator {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            BinaryOperator::Plus => write!(f, "+"),
-            BinaryOperator::Minus => write!(f, "-"),
-            BinaryOperator::Asterisk => write!(f, "*"),
-            BinaryOperator::Slash => write!(f, "/"),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
 pub enum TokenKind {
     Eof,
 
@@ -36,8 +17,10 @@ pub enum TokenKind {
     OpenParen,
     CloseParen,
 
-    BinaryOperator(BinaryOperator),
-
+    Plus,
+    Minus,
+    Asterisk,
+    Slash,
     Equal,
 }
 
@@ -68,7 +51,10 @@ impl fmt::Display for TokenKind {
             TokenKind::OpenParen => write!(f, "("),
             TokenKind::CloseParen => write!(f, ")"),
 
-            TokenKind::BinaryOperator(b) => write!(f, "{b}"),
+            TokenKind::Plus => write!(f, "+"),
+            TokenKind::Minus => write!(f, "-"),
+            TokenKind::Asterisk => write!(f, "*"),
+            TokenKind::Slash => write!(f, "/"),
 
             TokenKind::Equal => write!(f, "="),
         }

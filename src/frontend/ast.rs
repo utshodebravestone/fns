@@ -63,6 +63,7 @@ pub enum Expression {
     None(NoneLiteralExpression),
     Numeric(NumericLiteralExpression),
     Identifier(IdentifierExpression),
+    Unary(UnaryExpression),
     Binary(BinaryExpression),
     Assignment(AssignmentExpression),
 }
@@ -70,10 +71,11 @@ pub enum Expression {
 impl Expression {
     pub fn text_span(&self) -> TextSpan {
         match self {
-            Expression::None(n) => n.none.text_span.clone(),
-            Expression::Numeric(n) => n.number.text_span.clone(),
-            Expression::Identifier(i) => i.identifier.text_span.clone(),
-            Expression::Binary(b) => TextSpan::add(b.left.text_span(), b.right.text_span()),
+            Expression::None(n) => n.text_span(),
+            Expression::Numeric(n) => n.text_span(),
+            Expression::Identifier(i) => i.text_span(),
+            Expression::Unary(u) => u.text_span(),
+            Expression::Binary(b) => b.text_span(),
             Expression::Assignment(a) => a.text_span(),
         }
     }
@@ -116,6 +118,29 @@ impl BinaryExpression {
             right: Box::new(right),
         }
     }
+
+    pub fn text_span(&self) -> TextSpan {
+        TextSpan::add(self.left.text_span(), self.right.text_span())
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct UnaryExpression {
+    pub operator: Token,
+    pub right: Box<Expression>,
+}
+
+impl UnaryExpression {
+    pub fn new(operator: Token, right: Expression) -> Self {
+        Self {
+            operator,
+            right: Box::new(right),
+        }
+    }
+
+    pub fn text_span(&self) -> TextSpan {
+        TextSpan::add(self.operator.text_span.clone(), self.right.text_span())
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -126,6 +151,10 @@ pub struct IdentifierExpression {
 impl IdentifierExpression {
     pub fn new(identifier: Token) -> Self {
         Self { identifier }
+    }
+
+    pub fn text_span(&self) -> TextSpan {
+        self.identifier.text_span.clone()
     }
 }
 
@@ -139,6 +168,10 @@ impl NumericLiteralExpression {
     pub fn new(number: Token, value: Number) -> Self {
         Self { number, value }
     }
+
+    pub fn text_span(&self) -> TextSpan {
+        self.number.text_span.clone()
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -149,5 +182,9 @@ pub struct NoneLiteralExpression {
 impl NoneLiteralExpression {
     pub fn new(none: Token) -> Self {
         Self { none }
+    }
+
+    pub fn text_span(&self) -> TextSpan {
+        self.none.text_span.clone()
     }
 }

@@ -1,6 +1,6 @@
 use crate::frontend::{
     ast::{ConstStatement, Expression, LetStatement, Program, Statement},
-    token::{BinaryOperator, TokenKind},
+    token::TokenKind,
     utils::Error,
 };
 
@@ -65,35 +65,25 @@ fn evaluate_expression(
                 ))
             }
         }
+        Expression::Unary(u) => {
+            unimplemented!()
+        }
         Expression::Binary(b) => {
             let left = evaluate_expression(&b.left, environment)?;
             let right = evaluate_expression(&b.right, environment)?;
             match (b.operator.kind.clone(), left, right) {
-                (
-                    TokenKind::BinaryOperator(BinaryOperator::Plus),
-                    Value::Number(left),
-                    Value::Number(right),
-                ) => Ok(Value::Number(left + right)),
-                (
-                    TokenKind::BinaryOperator(BinaryOperator::Minus),
-                    Value::Number(left),
-                    Value::Number(right),
-                ) => Ok(Value::Number(left - right)),
-                (
-                    TokenKind::BinaryOperator(BinaryOperator::Asterisk),
-                    Value::Number(left),
-                    Value::Number(right),
-                ) => Ok(Value::Number(left * right)),
-                (
-                    TokenKind::BinaryOperator(BinaryOperator::Slash),
-                    Value::Number(left),
-                    Value::Number(right),
-                ) => {
+                (TokenKind::Plus, Value::Number(left), Value::Number(right)) => {
+                    Ok(Value::Number(left + right))
+                }
+                (TokenKind::Minus, Value::Number(left), Value::Number(right)) => {
+                    Ok(Value::Number(left - right))
+                }
+                (TokenKind::Asterisk, Value::Number(left), Value::Number(right)) => {
+                    Ok(Value::Number(left * right))
+                }
+                (TokenKind::Slash, Value::Number(left), Value::Number(right)) => {
                     if right == 0. {
-                        Err(Error::new(
-                            "Can't divide by 0".to_string(),
-                            expression.text_span(),
-                        ))
+                        Err(Error::new("Can't divide by 0".to_string(), b.text_span()))
                     } else {
                         Ok(Value::Number(left / right))
                     }

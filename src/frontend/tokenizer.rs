@@ -1,5 +1,5 @@
 use super::{
-    token::{BinaryOperator, Token, TokenKind},
+    token::{Token, TokenKind},
     utils::{Error, TextSpan},
 };
 
@@ -40,17 +40,17 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
             )),
 
             '+' => tokens.push(Token::new(
-                TokenKind::BinaryOperator(BinaryOperator::Plus),
+                TokenKind::Plus,
                 source_code[starting_index..current_index].iter().collect(),
                 TextSpan::new(starting_index, current_index),
             )),
             '-' => tokens.push(Token::new(
-                TokenKind::BinaryOperator(BinaryOperator::Minus),
+                TokenKind::Minus,
                 source_code[starting_index..current_index].iter().collect(),
                 TextSpan::new(starting_index, current_index),
             )),
             '*' => tokens.push(Token::new(
-                TokenKind::BinaryOperator(BinaryOperator::Asterisk),
+                TokenKind::Asterisk,
                 source_code[starting_index..current_index].iter().collect(),
                 TextSpan::new(starting_index, current_index),
             )),
@@ -64,7 +64,7 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                     }
                 } else {
                     tokens.push(Token::new(
-                        TokenKind::BinaryOperator(BinaryOperator::Slash),
+                        TokenKind::Slash,
                         source_code[starting_index..current_index].iter().collect(),
                         TextSpan::new(starting_index, current_index),
                     ));
@@ -113,7 +113,7 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
 #[cfg(test)]
 mod tests {
     use crate::frontend::{
-        token::{BinaryOperator, Token, TokenKind},
+        token::{Token, TokenKind},
         utils::TextSpan,
     };
 
@@ -172,26 +172,10 @@ mod tests {
         let expected_tokens = vec![
             Token::new(TokenKind::Equal, "=".to_string(), TextSpan::new(0, 1)),
             Token::new(TokenKind::OpenParen, "(".to_string(), TextSpan::new(1, 2)),
-            Token::new(
-                TokenKind::BinaryOperator(BinaryOperator::Plus),
-                "+".to_string(),
-                TextSpan::new(2, 3),
-            ),
-            Token::new(
-                TokenKind::BinaryOperator(BinaryOperator::Minus),
-                "-".to_string(),
-                TextSpan::new(3, 4),
-            ),
-            Token::new(
-                TokenKind::BinaryOperator(BinaryOperator::Asterisk),
-                "*".to_string(),
-                TextSpan::new(4, 5),
-            ),
-            Token::new(
-                TokenKind::BinaryOperator(BinaryOperator::Slash),
-                "/".to_string(),
-                TextSpan::new(5, 6),
-            ),
+            Token::new(TokenKind::Plus, "+".to_string(), TextSpan::new(2, 3)),
+            Token::new(TokenKind::Minus, "-".to_string(), TextSpan::new(3, 4)),
+            Token::new(TokenKind::Asterisk, "*".to_string(), TextSpan::new(4, 5)),
+            Token::new(TokenKind::Slash, "/".to_string(), TextSpan::new(5, 6)),
             Token::new(TokenKind::CloseParen, ")".to_string(), TextSpan::new(6, 7)),
             Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(7, 8)),
         ];
