@@ -2,6 +2,7 @@ use super::{
     ast::{
         AssignmentExpression, BinaryExpression, ConstStatement, Expression, IdentifierExpression,
         LetStatement, NoneLiteralExpression, NumericLiteralExpression, Program, Statement,
+        UnaryExpression,
     },
     token::{Token, TokenKind},
     utils::Error,
@@ -133,7 +134,7 @@ fn parse_binary_multiplicative_expression(
     current_token_index: usize,
 ) -> Result<(Expression, usize), Error> {
     let mut current_token_index = current_token_index;
-    let (mut left, consumed_until) = parse_primary_expression(tokens, current_token_index)?;
+    let (mut left, consumed_until) = parse_unary_expression(tokens, current_token_index)?;
     current_token_index = consumed_until;
     while token_matches(
         tokens[current_token_index].kind.clone(),
@@ -147,6 +148,24 @@ fn parse_binary_multiplicative_expression(
     }
 
     Ok((left, current_token_index))
+}
+
+fn parse_unary_expression(
+    tokens: &[Token],
+    current_token_index: usize,
+) -> Result<(Expression, usize), Error> {
+    while token_matches(
+        tokens[current_token_index].kind.clone(),
+        &[TokenKind::Plus, TokenKind::Minus],
+    ) {
+        let (operator, current_token_index) = eat_token(tokens, current_token_index);
+        let (right, current_token_index) = parse_unary_expression(tokens, current_token_index)?;
+        return Ok((
+            Expression::Unary(UnaryExpression::new(operator, right)),
+            current_token_index,
+        ));
+    }
+    parse_primary_expression(tokens, current_token_index)
 }
 
 fn parse_primary_expression(
@@ -210,16 +229,21 @@ fn expect_to_match(
     }
 }
 
+fn eat_token(tokens: &[Token], current_token_index: usize) -> (Token, usize) {
+    (tokens[current_token_index].clone(), current_token_index + 1)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::frontend::{
         ast::{
             AssignmentExpression, BinaryExpression, ConstStatement, Expression,
             IdentifierExpression, LetStatement, NumericLiteralExpression, Statement,
+            UnaryExpression,
         },
         parser::{
             parse_assignment_expression, parse_binary_expression, parse_const_statement,
-            parse_let_statement, parse_primary_expression,
+            parse_let_statement, parse_primary_expression, parse_unary_expression,
         },
         token::{Token, TokenKind},
         tokenizer::tokenize,
@@ -331,6 +355,30 @@ mod tests {
         );
         let tokens = tokenize(source_code).unwrap();
         let output = parse_binary_expression(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_unary_expression() {
+        let source_code = "+--2.5";
+        let expected_output = (
+            Expression::Unary(UnaryExpression::new(
+                Token::new(TokenKind::Plus, "+".to_string(), TextSpan::new(0, 1)),
+                Expression::Unary(UnaryExpression::new(
+                    Token::new(TokenKind::Minus, "-".to_string(), TextSpan::new(1, 2)),
+                    Expression::Unary(UnaryExpression::new(
+                        Token::new(TokenKind::Minus, "-".to_string(), TextSpan::new(2, 3)),
+                        Expression::Numeric(NumericLiteralExpression::new(
+                            Token::new(TokenKind::Number, "2.5".to_string(), TextSpan::new(3, 6)),
+                            2.5,
+                        )),
+                    )),
+                )),
+            )),
+            4,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_unary_expression(&tokens, 0).unwrap();
         assert_eq!(expected_output, output);
     }
 

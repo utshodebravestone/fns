@@ -66,7 +66,16 @@ fn evaluate_expression(
             }
         }
         Expression::Unary(u) => {
-            unimplemented!()
+            let right = evaluate_expression(&u.right, environment)?;
+            match (u.operator.kind.clone(), right) {
+                (TokenKind::Plus, Value::Number(a)) => Ok(Value::Number(a)),
+                (TokenKind::Minus, Value::Number(a)) => Ok(Value::Number(-a)),
+
+                (operator, right) => Err(Error::new(
+                    format!("Can't use '{operator}' with '{right}'"),
+                    u.text_span(),
+                )),
+            }
         }
         Expression::Binary(b) => {
             let left = evaluate_expression(&b.left, environment)?;
@@ -202,6 +211,16 @@ mod tests {
     fn test_evaluate_binary_expression() {
         let src = "5 + 5";
         let expected_value = Value::Number(10.);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_unary_expression() {
+        let src = "--+-5";
+        let expected_value = Value::Number(-5.);
         let tokens = tokenize(src).unwrap();
         let program = parse(tokens).unwrap();
         let (val, _) = evaluate(program, None).unwrap();
