@@ -27,8 +27,15 @@ pub enum TokenKind {
     Bang,
     Ampersand,
     Pipe,
+    Greater,
+    Lesser,
+
     DoubleAmpersand,
     DoublePipe,
+    DoubleEqual,
+    BangEqual,
+    GreaterOrEqual,
+    LesserOrEqual,
 }
 
 impl TokenKind {
@@ -70,8 +77,15 @@ impl fmt::Display for TokenKind {
             TokenKind::Bang => write!(f, "!"),
             TokenKind::Ampersand => write!(f, "&"),
             TokenKind::Pipe => write!(f, "|"),
+            TokenKind::Greater => write!(f, ">"),
+            TokenKind::Lesser => write!(f, "<"),
+
             TokenKind::DoubleAmpersand => write!(f, "&&"),
             TokenKind::DoublePipe => write!(f, "||"),
+            TokenKind::DoubleEqual => write!(f, "=="),
+            TokenKind::BangEqual => write!(f, "!="),
+            TokenKind::GreaterOrEqual => write!(f, ">="),
+            TokenKind::LesserOrEqual => write!(f, "<="),
         }
     }
 }

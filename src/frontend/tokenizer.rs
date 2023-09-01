@@ -48,16 +48,7 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                 source_code[starting_index..current_index].iter().collect(),
                 TextSpan::new(starting_index, current_index),
             )),
-            '=' => tokens.push(Token::new(
-                TokenKind::Equal,
-                source_code[starting_index..current_index].iter().collect(),
-                TextSpan::new(starting_index, current_index),
-            )),
-            '!' => tokens.push(Token::new(
-                TokenKind::Bang,
-                source_code[starting_index..current_index].iter().collect(),
-                TextSpan::new(starting_index, current_index),
-            )),
+
             '/' => {
                 if source_code.get(current_index).is_some() && source_code[current_index] == '/' {
                     while current_index < source_code.len()
@@ -101,6 +92,70 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                 } else {
                     tokens.push(Token::new(
                         TokenKind::Pipe,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                }
+            }
+            '=' => {
+                if source_code.get(current_index).is_some() && source_code[current_index] == '=' {
+                    current_index += 1;
+                    tokens.push(Token::new(
+                        TokenKind::DoubleEqual,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                } else {
+                    tokens.push(Token::new(
+                        TokenKind::Equal,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                }
+            }
+            '!' => {
+                if source_code.get(current_index).is_some() && source_code[current_index] == '=' {
+                    current_index += 1;
+                    tokens.push(Token::new(
+                        TokenKind::BangEqual,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                } else {
+                    tokens.push(Token::new(
+                        TokenKind::Bang,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                }
+            }
+            '>' => {
+                if source_code.get(current_index).is_some() && source_code[current_index] == '=' {
+                    current_index += 1;
+                    tokens.push(Token::new(
+                        TokenKind::GreaterOrEqual,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                } else {
+                    tokens.push(Token::new(
+                        TokenKind::Greater,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                }
+            }
+            '<' => {
+                if source_code.get(current_index).is_some() && source_code[current_index] == '=' {
+                    current_index += 1;
+                    tokens.push(Token::new(
+                        TokenKind::LesserOrEqual,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                } else {
+                    tokens.push(Token::new(
+                        TokenKind::Lesser,
                         source_code[starting_index..current_index].iter().collect(),
                         TextSpan::new(starting_index, current_index),
                     ));
@@ -206,7 +261,7 @@ mod tests {
 
     #[test]
     fn test_tokenize_with_single_and_double_character_tokens() {
-        let source_code = "=(+-*/)!&&&|||";
+        let source_code = "=(+-*/)!&&&|||><>=<===!=";
         let expected_tokens = vec![
             Token::new(TokenKind::Equal, "=".to_string(), TextSpan::new(0, 1)),
             Token::new(TokenKind::OpenParen, "(".to_string(), TextSpan::new(1, 2)),
@@ -228,7 +283,29 @@ mod tests {
                 TextSpan::new(11, 13),
             ),
             Token::new(TokenKind::Pipe, "|".to_string(), TextSpan::new(13, 14)),
-            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(14, 15)),
+            Token::new(TokenKind::Greater, ">".to_string(), TextSpan::new(14, 15)),
+            Token::new(TokenKind::Lesser, "<".to_string(), TextSpan::new(15, 16)),
+            Token::new(
+                TokenKind::GreaterOrEqual,
+                ">=".to_string(),
+                TextSpan::new(16, 18),
+            ),
+            Token::new(
+                TokenKind::LesserOrEqual,
+                "<=".to_string(),
+                TextSpan::new(18, 20),
+            ),
+            Token::new(
+                TokenKind::DoubleEqual,
+                "==".to_string(),
+                TextSpan::new(20, 22),
+            ),
+            Token::new(
+                TokenKind::BangEqual,
+                "!=".to_string(),
+                TextSpan::new(22, 24),
+            ),
+            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(24, 25)),
         ];
         let tokens = tokenize(source_code).unwrap();
         assert_eq!(tokens, expected_tokens);
