@@ -69,6 +69,8 @@ fn evaluate_expression(
         Expression::Unary(u) => {
             let right = evaluate_expression(&u.right, environment)?;
             match (u.operator.kind.clone(), right) {
+                (TokenKind::Bang, Value::Boolean(a)) => Ok(Value::Boolean(!a)),
+
                 (TokenKind::Plus, Value::Number(a)) => Ok(Value::Number(a)),
                 (TokenKind::Minus, Value::Number(a)) => Ok(Value::Number(-a)),
 
@@ -97,6 +99,29 @@ fn evaluate_expression(
                     } else {
                         Ok(Value::Number(left / right))
                     }
+                }
+
+                (TokenKind::Greater, Value::Number(left), Value::Number(right)) => {
+                    Ok(Value::Boolean(left > right))
+                }
+                (TokenKind::Lesser, Value::Number(left), Value::Number(right)) => {
+                    Ok(Value::Boolean(left < right))
+                }
+                (TokenKind::GreaterOrEqual, Value::Number(left), Value::Number(right)) => {
+                    Ok(Value::Boolean(left >= right))
+                }
+                (TokenKind::LesserOrEqual, Value::Number(left), Value::Number(right)) => {
+                    Ok(Value::Boolean(left <= right))
+                }
+
+                (TokenKind::BangEqual, left, right) => Ok(Value::Boolean(left != right)),
+                (TokenKind::DoubleEqual, left, right) => Ok(Value::Boolean(left == right)),
+
+                (TokenKind::DoubleAmpersand, Value::Boolean(left), Value::Boolean(right)) => {
+                    Ok(Value::Boolean(left && right))
+                }
+                (TokenKind::DoublePipe, Value::Boolean(left), Value::Boolean(right)) => {
+                    Ok(Value::Boolean(left || right))
                 }
 
                 (operator, left, right) => Err(Error::new(
@@ -209,9 +234,60 @@ mod tests {
     }
 
     #[test]
-    fn test_evaluate_binary_expression() {
-        let src = "5 + 5";
-        let expected_value = Value::Number(10.);
+    fn test_evaluate_binary_arithmetic_expression() {
+        let src = "5 + 5 * 2 / 5 - 2";
+        let expected_value = Value::Number(5.);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_binary_comparison_expression() {
+        let src = "5 > 5";
+        let expected_value = Value::Boolean(false);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+
+        let src = "5 < 5";
+        let expected_value = Value::Boolean(false);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+
+        let src = "5 >= 5";
+        let expected_value = Value::Boolean(true);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+
+        let src = "5 <= 5";
+        let expected_value = Value::Boolean(true);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_binary_equality_expression() {
+        let src = "5 == 5 != 5";
+        let expected_value = Value::Boolean(false);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_binary_logical_expression() {
+        let src = "true && false || !true";
+        let expected_value = Value::Boolean(false);
         let tokens = tokenize(src).unwrap();
         let program = parse(tokens).unwrap();
         let (val, _) = evaluate(program, None).unwrap();
@@ -222,6 +298,13 @@ mod tests {
     fn test_evaluate_unary_expression() {
         let src = "--+-5";
         let expected_value = Value::Number(-5.);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+
+        let src = "!true";
+        let expected_value = Value::Boolean(false);
         let tokens = tokenize(src).unwrap();
         let program = parse(tokens).unwrap();
         let (val, _) = evaluate(program, None).unwrap();
