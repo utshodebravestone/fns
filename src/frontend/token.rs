@@ -24,6 +24,11 @@ pub enum TokenKind {
     Asterisk,
     Slash,
     Equal,
+    Bang,
+    Ampersand,
+    Pipe,
+    DoubleAmpersand,
+    DoublePipe,
 }
 
 impl TokenKind {
@@ -61,8 +66,12 @@ impl fmt::Display for TokenKind {
             TokenKind::Minus => write!(f, "-"),
             TokenKind::Asterisk => write!(f, "*"),
             TokenKind::Slash => write!(f, "/"),
-
             TokenKind::Equal => write!(f, "="),
+            TokenKind::Bang => write!(f, "!"),
+            TokenKind::Ampersand => write!(f, "&"),
+            TokenKind::Pipe => write!(f, "|"),
+            TokenKind::DoubleAmpersand => write!(f, "&&"),
+            TokenKind::DoublePipe => write!(f, "||"),
         }
     }
 }

@@ -22,12 +22,6 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                 TextSpan::new(starting_index, current_index),
             )),
 
-            '=' => tokens.push(Token::new(
-                TokenKind::Equal,
-                source_code[starting_index..current_index].iter().collect(),
-                TextSpan::new(starting_index, current_index),
-            )),
-
             '(' => tokens.push(Token::new(
                 TokenKind::OpenParen,
                 source_code[starting_index..current_index].iter().collect(),
@@ -54,6 +48,16 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                 source_code[starting_index..current_index].iter().collect(),
                 TextSpan::new(starting_index, current_index),
             )),
+            '=' => tokens.push(Token::new(
+                TokenKind::Equal,
+                source_code[starting_index..current_index].iter().collect(),
+                TextSpan::new(starting_index, current_index),
+            )),
+            '!' => tokens.push(Token::new(
+                TokenKind::Bang,
+                source_code[starting_index..current_index].iter().collect(),
+                TextSpan::new(starting_index, current_index),
+            )),
             '/' => {
                 if source_code.get(current_index).is_some() && source_code[current_index] == '/' {
                     while current_index < source_code.len()
@@ -65,6 +69,38 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                 } else {
                     tokens.push(Token::new(
                         TokenKind::Slash,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                }
+            }
+            '&' => {
+                if source_code.get(current_index).is_some() && source_code[current_index] == '&' {
+                    current_index += 1;
+                    tokens.push(Token::new(
+                        TokenKind::DoubleAmpersand,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                } else {
+                    tokens.push(Token::new(
+                        TokenKind::Ampersand,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                }
+            }
+            '|' => {
+                if source_code.get(current_index).is_some() && source_code[current_index] == '|' {
+                    current_index += 1;
+                    tokens.push(Token::new(
+                        TokenKind::DoublePipe,
+                        source_code[starting_index..current_index].iter().collect(),
+                        TextSpan::new(starting_index, current_index),
+                    ));
+                } else {
+                    tokens.push(Token::new(
+                        TokenKind::Pipe,
                         source_code[starting_index..current_index].iter().collect(),
                         TextSpan::new(starting_index, current_index),
                     ));
@@ -169,8 +205,8 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_with_single_character_tokens() {
-        let source_code = "=(+-*/)";
+    fn test_tokenize_with_single_and_double_character_tokens() {
+        let source_code = "=(+-*/)!&&&|||";
         let expected_tokens = vec![
             Token::new(TokenKind::Equal, "=".to_string(), TextSpan::new(0, 1)),
             Token::new(TokenKind::OpenParen, "(".to_string(), TextSpan::new(1, 2)),
@@ -179,7 +215,20 @@ mod tests {
             Token::new(TokenKind::Asterisk, "*".to_string(), TextSpan::new(4, 5)),
             Token::new(TokenKind::Slash, "/".to_string(), TextSpan::new(5, 6)),
             Token::new(TokenKind::CloseParen, ")".to_string(), TextSpan::new(6, 7)),
-            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(7, 8)),
+            Token::new(TokenKind::Bang, "!".to_string(), TextSpan::new(7, 8)),
+            Token::new(
+                TokenKind::DoubleAmpersand,
+                "&&".to_string(),
+                TextSpan::new(8, 10),
+            ),
+            Token::new(TokenKind::Ampersand, "&".to_string(), TextSpan::new(10, 11)),
+            Token::new(
+                TokenKind::DoublePipe,
+                "||".to_string(),
+                TextSpan::new(11, 13),
+            ),
+            Token::new(TokenKind::Pipe, "|".to_string(), TextSpan::new(13, 14)),
+            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(14, 15)),
         ];
         let tokens = tokenize(source_code).unwrap();
         assert_eq!(tokens, expected_tokens);

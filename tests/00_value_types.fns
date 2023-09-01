@@ -1,0 +1,10 @@
+// boolean
+true
+false
+
+// numeric (represented as f64)
+10
+10.5
+
+// string
+"fns for fun, fun, functions"
