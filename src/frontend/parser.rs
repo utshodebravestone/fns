@@ -104,7 +104,78 @@ fn parse_binary_expression(
     tokens: &[Token],
     current_token_index: usize,
 ) -> Result<(Expression, usize), Error> {
-    parse_binary_additive_expression(tokens, current_token_index)
+    parse_binary_logical_expression(tokens, current_token_index)
+}
+
+fn parse_binary_logical_expression(
+    tokens: &[Token],
+    current_token_index: usize,
+) -> Result<(Expression, usize), Error> {
+    let mut current_token_index = current_token_index;
+    let (mut left, consumed_until) = parse_binary_equality_expression(tokens, current_token_index)?;
+    current_token_index = consumed_until;
+    while token_matches(
+        &tokens[current_token_index].kind,
+        &[TokenKind::DoubleAmpersand, TokenKind::DoublePipe],
+    ) {
+        let operator = tokens[current_token_index].clone();
+        current_token_index += 1;
+        let (right, consumed_until) = parse_binary_logical_expression(tokens, current_token_index)?;
+        current_token_index = consumed_until;
+        left = Expression::Binary(BinaryExpression::new(left, operator, right));
+    }
+
+    Ok((left, current_token_index))
+}
+
+fn parse_binary_equality_expression(
+    tokens: &[Token],
+    current_token_index: usize,
+) -> Result<(Expression, usize), Error> {
+    let mut current_token_index = current_token_index;
+    let (mut left, consumed_until) =
+        parse_binary_comparison_expression(tokens, current_token_index)?;
+    current_token_index = consumed_until;
+    while token_matches(
+        &tokens[current_token_index].kind,
+        &[TokenKind::DoubleEqual, TokenKind::BangEqual],
+    ) {
+        let operator = tokens[current_token_index].clone();
+        current_token_index += 1;
+        let (right, consumed_until) =
+            parse_binary_equality_expression(tokens, current_token_index)?;
+        current_token_index = consumed_until;
+        left = Expression::Binary(BinaryExpression::new(left, operator, right));
+    }
+
+    Ok((left, current_token_index))
+}
+
+fn parse_binary_comparison_expression(
+    tokens: &[Token],
+    current_token_index: usize,
+) -> Result<(Expression, usize), Error> {
+    let mut current_token_index = current_token_index;
+    let (mut left, consumed_until) = parse_binary_additive_expression(tokens, current_token_index)?;
+    current_token_index = consumed_until;
+    while token_matches(
+        &tokens[current_token_index].kind,
+        &[
+            TokenKind::Greater,
+            TokenKind::Lesser,
+            TokenKind::GreaterOrEqual,
+            TokenKind::LesserOrEqual,
+        ],
+    ) {
+        let operator = tokens[current_token_index].clone();
+        current_token_index += 1;
+        let (right, consumed_until) =
+            parse_binary_comparison_expression(tokens, current_token_index)?;
+        current_token_index = consumed_until;
+        left = Expression::Binary(BinaryExpression::new(left, operator, right));
+    }
+
+    Ok((left, current_token_index))
 }
 
 fn parse_binary_additive_expression(
@@ -121,7 +192,8 @@ fn parse_binary_additive_expression(
     ) {
         let operator = tokens[current_token_index].clone();
         current_token_index += 1;
-        let (right, consumed_until) = parse_binary_expression(tokens, current_token_index)?;
+        let (right, consumed_until) =
+            parse_binary_additive_expression(tokens, current_token_index)?;
         current_token_index = consumed_until;
         left = Expression::Binary(BinaryExpression::new(left, operator, right));
     }
@@ -142,7 +214,8 @@ fn parse_binary_multiplicative_expression(
     ) {
         let operator = tokens[current_token_index].clone();
         current_token_index += 1;
-        let (right, consumed_until) = parse_binary_expression(tokens, current_token_index)?;
+        let (right, consumed_until) =
+            parse_binary_multiplicative_expression(tokens, current_token_index)?;
         current_token_index = consumed_until;
         left = Expression::Binary(BinaryExpression::new(left, operator, right));
     }
@@ -156,7 +229,7 @@ fn parse_unary_expression(
 ) -> Result<(Expression, usize), Error> {
     if token_matches(
         &tokens[current_token_index].kind,
-        &[TokenKind::Plus, TokenKind::Minus],
+        &[TokenKind::Bang, TokenKind::Plus, TokenKind::Minus],
     ) {
         let (operator, current_token_index) = eat_token(tokens, current_token_index);
         let (right, current_token_index) = parse_unary_expression(tokens, current_token_index)?;
@@ -325,7 +398,135 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_binary_expression() {
+    fn test_parse_binary_logical_expression() {
+        let source_code = "a&&b||c";
+        let expected_output = (
+            Expression::Binary(BinaryExpression::new(
+                Expression::Identifier(IdentifierExpression::new(Token::new(
+                    TokenKind::Identifier,
+                    "a".to_string(),
+                    TextSpan::new(0, 1),
+                ))),
+                Token::new(
+                    TokenKind::DoubleAmpersand,
+                    "&&".to_string(),
+                    TextSpan::new(1, 3),
+                ),
+                Expression::Binary(BinaryExpression::new(
+                    Expression::Identifier(IdentifierExpression::new(Token::new(
+                        TokenKind::Identifier,
+                        "b".to_string(),
+                        TextSpan::new(3, 4),
+                    ))),
+                    Token::new(TokenKind::DoublePipe, "||".to_string(), TextSpan::new(4, 6)),
+                    Expression::Identifier(IdentifierExpression::new(Token::new(
+                        TokenKind::Identifier,
+                        "c".to_string(),
+                        TextSpan::new(6, 7),
+                    ))),
+                )),
+            )),
+            5,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_binary_expression(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_binary_equality_expression() {
+        let source_code = "a==b!=c";
+        let expected_output = (
+            Expression::Binary(BinaryExpression::new(
+                Expression::Identifier(IdentifierExpression::new(Token::new(
+                    TokenKind::Identifier,
+                    "a".to_string(),
+                    TextSpan::new(0, 1),
+                ))),
+                Token::new(
+                    TokenKind::DoubleEqual,
+                    "==".to_string(),
+                    TextSpan::new(1, 3),
+                ),
+                Expression::Binary(BinaryExpression::new(
+                    Expression::Identifier(IdentifierExpression::new(Token::new(
+                        TokenKind::Identifier,
+                        "b".to_string(),
+                        TextSpan::new(3, 4),
+                    ))),
+                    Token::new(TokenKind::BangEqual, "!=".to_string(), TextSpan::new(4, 6)),
+                    Expression::Identifier(IdentifierExpression::new(Token::new(
+                        TokenKind::Identifier,
+                        "c".to_string(),
+                        TextSpan::new(6, 7),
+                    ))),
+                )),
+            )),
+            5,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_binary_expression(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_binary_comparison_expression() {
+        let source_code = "a>b<c>=d<=e";
+        let expected_output = (
+            Expression::Binary(BinaryExpression::new(
+                Expression::Identifier(IdentifierExpression::new(Token::new(
+                    TokenKind::Identifier,
+                    "a".to_string(),
+                    TextSpan::new(0, 1),
+                ))),
+                Token::new(TokenKind::Greater, ">".to_string(), TextSpan::new(1, 2)),
+                Expression::Binary(BinaryExpression::new(
+                    Expression::Identifier(IdentifierExpression::new(Token::new(
+                        TokenKind::Identifier,
+                        "b".to_string(),
+                        TextSpan::new(2, 3),
+                    ))),
+                    Token::new(TokenKind::Lesser, "<".to_string(), TextSpan::new(3, 4)),
+                    Expression::Binary(BinaryExpression::new(
+                        Expression::Identifier(IdentifierExpression::new(Token::new(
+                            TokenKind::Identifier,
+                            "c".to_string(),
+                            TextSpan::new(4, 5),
+                        ))),
+                        Token::new(
+                            TokenKind::GreaterOrEqual,
+                            ">=".to_string(),
+                            TextSpan::new(5, 7),
+                        ),
+                        Expression::Binary(BinaryExpression::new(
+                            Expression::Identifier(IdentifierExpression::new(Token::new(
+                                TokenKind::Identifier,
+                                "d".to_string(),
+                                TextSpan::new(7, 8),
+                            ))),
+                            Token::new(
+                                TokenKind::LesserOrEqual,
+                                "<=".to_string(),
+                                TextSpan::new(8, 10),
+                            ),
+                            Expression::Identifier(IdentifierExpression::new(Token::new(
+                                TokenKind::Identifier,
+                                "e".to_string(),
+                                TextSpan::new(10, 11),
+                            ))),
+                        )),
+                    )),
+                )),
+            )),
+            9,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_binary_expression(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_binary_additive_and_multiplicative_expression() {
         let source_code = "a+b-c*d/e";
         let expected_output = (
             Expression::Binary(BinaryExpression::new(
@@ -374,12 +575,12 @@ mod tests {
 
     #[test]
     fn test_parse_unary_expression() {
-        let source_code = "+--2.5";
+        let source_code = "!+-2.5";
         let expected_output = (
             Expression::Unary(UnaryExpression::new(
-                Token::new(TokenKind::Plus, "+".to_string(), TextSpan::new(0, 1)),
+                Token::new(TokenKind::Bang, "!".to_string(), TextSpan::new(0, 1)),
                 Expression::Unary(UnaryExpression::new(
-                    Token::new(TokenKind::Minus, "-".to_string(), TextSpan::new(1, 2)),
+                    Token::new(TokenKind::Plus, "+".to_string(), TextSpan::new(1, 2)),
                     Expression::Unary(UnaryExpression::new(
                         Token::new(TokenKind::Minus, "-".to_string(), TextSpan::new(2, 3)),
                         Expression::Numeric(NumericLiteralExpression::new(
