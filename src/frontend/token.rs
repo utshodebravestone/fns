@@ -7,6 +7,7 @@ pub enum TokenKind {
     Eof,
 
     Number,
+    String,
 
     Identifier,
 
@@ -57,6 +58,7 @@ impl fmt::Display for TokenKind {
             TokenKind::Eof => write!(f, "\0"),
 
             TokenKind::Number => write!(f, "NUMBER"),
+            TokenKind::String => write!(f, "STRING"),
 
             TokenKind::Identifier => write!(f, "IDENTIFIER"),
 

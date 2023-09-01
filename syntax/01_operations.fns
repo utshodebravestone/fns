@@ -12,3 +12,6 @@
 
 // logical
 true && false || !true
+
+// string concatenation
+"foo" + "bar"

@@ -49,6 +49,7 @@ pub enum Expression {
     None(NoneLiteralExpression),
     Boolean(BooleanLiteralExpression),
     Numeric(NumericLiteralExpression),
+    String(StringLiteralExpression),
     Identifier(IdentifierExpression),
     Unary(UnaryExpression),
     Binary(BinaryExpression),
@@ -61,6 +62,7 @@ impl Expression {
             Expression::None(n) => n.text_span(),
             Expression::Boolean(b) => b.text_span(),
             Expression::Numeric(n) => n.text_span(),
+            Expression::String(s) => s.text_span(),
             Expression::Identifier(i) => i.text_span(),
             Expression::Unary(u) => u.text_span(),
             Expression::Binary(b) => b.text_span(),
@@ -143,6 +145,22 @@ impl IdentifierExpression {
 
     pub fn text_span(&self) -> TextSpan {
         self.identifier.text_span.clone()
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct StringLiteralExpression {
+    pub string: Token,
+    pub value: String,
+}
+
+impl StringLiteralExpression {
+    pub fn new(string: Token, value: String) -> Self {
+        Self { string, value }
+    }
+
+    pub fn text_span(&self) -> TextSpan {
+        self.string.text_span.clone()
     }
 }
 

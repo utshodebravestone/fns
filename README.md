@@ -27,23 +27,26 @@ EXPRESSION = "(" CORE_EXPRESSION ")"
 CORE_EXPRESSION = ASSIGNMENT_EXPRESSION
                                      | BINARY_EXPRESSION
                                      | UNARY_EXPRESSION
-                                     | NUMERIC_EXPRESSION
-                                     | BOOLEAN_EXPRESSION
-                                     | NONE_EXPRESSION
+                                     | STRING_LITERAL_EXPRESSION
+                                     | NUMERIC_LITERAL_EXPRESSION
+                                     | BOOLEAN_LITERAL_EXPRESSION
+                                     | NONE_LITERAL_EXPRESSION
                                      | IDENTIFIER_EXPRESSION
 
 ASSIGNMENT_EXPRESSION = IDENTIFIER "=" EXPRESSION
 BINARY_EXPRESSION = EXPRESSION BINARY_OPERATOR EXPRESSION
 UNARY_EXPRESSION = UNARY_OPERATOR EXPRESSION
-NUMERIC_EXPRESSION = NUMBER
-BOOLEAN_EXPRESSION = BOOLEAN
-NONE_EXPRESSION = NONE
+STRING_LITERAL_EXPRESSION = STRING
+NUMERIC_LITERAL_EXPRESSION = NUMBER
+BOOLEAN_LITERAL_EXPRESSION = BOOLEAN
+NONE_LITERAL_EXPRESSION = NONE
 IDENTIFIER_EXPRESSION = IDENTIFIER
 
 ---
 
-BINARY_OPERATOR = "+" | "-" | "*" | "/"
-UNARY_OPERATOR = "+" | "-"
+BINARY_OPERATOR = "+" | "-" | "*" | "/" | ">" | "<" | "<=" | ">=" | "==" | "!=" | "&&" | "||"
+UNARY_OPERATOR = "+" | "-" | "!"
+STRING = " * "
 NUMBER = [0-9]+.*[0-9]*
 BOOLEAN = "true" | "false"
 NONE = "none"

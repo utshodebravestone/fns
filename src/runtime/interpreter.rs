@@ -53,6 +53,7 @@ fn evaluate_expression(
         Expression::None(_) => Ok(Value::None),
         Expression::Boolean(b) => Ok(Value::Boolean(b.value)),
         Expression::Numeric(n) => Ok(Value::Number(n.value)),
+        Expression::String(s) => Ok(Value::String(s.value.clone())),
         Expression::Identifier(i) => {
             if let Some(value) = environment.access(&i.identifier.lexeme) {
                 Ok(value)
@@ -84,6 +85,10 @@ fn evaluate_expression(
             let left = evaluate_expression(&b.left, environment)?;
             let right = evaluate_expression(&b.right, environment)?;
             match (b.operator.kind.clone(), left, right) {
+                (TokenKind::Plus, Value::String(left), Value::String(right)) => {
+                    Ok(Value::String(left + &right))
+                }
+
                 (TokenKind::Plus, Value::Number(left), Value::Number(right)) => {
                     Ok(Value::Number(left + right))
                 }
@@ -295,6 +300,16 @@ mod tests {
     }
 
     #[test]
+    fn test_evaluate_string_concatenation_expression() {
+        let src = "\"hello, \" + \"world!\"";
+        let expected_value = Value::String("hello, world!".to_string());
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
     fn test_evaluate_unary_expression() {
         let src = "--+-5";
         let expected_value = Value::Number(-5.);
@@ -305,6 +320,16 @@ mod tests {
 
         let src = "!true";
         let expected_value = Value::Boolean(false);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_string_expression() {
+        let src = "\"hello, world!\"";
+        let expected_value = Value::String("hello, world!".to_string());
         let tokens = tokenize(src).unwrap();
         let program = parse(tokens).unwrap();
         let (val, _) = evaluate(program, None).unwrap();

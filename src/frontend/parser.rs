@@ -2,7 +2,7 @@ use super::{
     ast::{
         AssignmentExpression, BinaryExpression, BooleanLiteralExpression, ConstStatement,
         Expression, IdentifierExpression, LetStatement, NoneLiteralExpression,
-        NumericLiteralExpression, Program, Statement, UnaryExpression,
+        NumericLiteralExpression, Program, Statement, StringLiteralExpression, UnaryExpression,
     },
     token::{Token, TokenKind},
     utils::Error,
@@ -281,6 +281,13 @@ fn parse_primary_expression(
             )),
             current_token_index + 1,
         )),
+        TokenKind::String => Ok((
+            Expression::String(StringLiteralExpression::new(
+                tokens[current_token_index].clone(),
+                tokens[current_token_index].lexeme.parse().unwrap(),
+            )),
+            current_token_index + 1,
+        )),
         TokenKind::Identifier => Ok((
             Expression::Identifier(IdentifierExpression::new(
                 tokens[current_token_index].clone(),
@@ -326,7 +333,7 @@ mod tests {
         ast::{
             AssignmentExpression, BinaryExpression, BooleanLiteralExpression, ConstStatement,
             Expression, IdentifierExpression, LetStatement, NumericLiteralExpression, Statement,
-            UnaryExpression,
+            StringLiteralExpression, UnaryExpression,
         },
         parser::{
             parse_assignment_expression, parse_binary_expression, parse_const_statement,
@@ -650,6 +657,25 @@ mod tests {
             Expression::Numeric(NumericLiteralExpression::new(
                 Token::new(TokenKind::Number, "2.5".to_string(), TextSpan::new(0, 3)),
                 2.5,
+            )),
+            1,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_primary_expression(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_primary_string_expression() {
+        let source_code = "\"hello, world\"";
+        let expected_output = (
+            Expression::String(StringLiteralExpression::new(
+                Token::new(
+                    TokenKind::String,
+                    "hello, world".to_string(),
+                    TextSpan::new(0, 14),
+                ),
+                "hello, world".to_string(),
             )),
             1,
         );

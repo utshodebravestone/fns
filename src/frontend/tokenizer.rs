@@ -162,6 +162,30 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                 }
             }
 
+            '"' => {
+                loop {
+                    if source_code[current_index] == '"' {
+                        current_index += 1;
+                        break;
+                    }
+                    if source_code[current_index] == '\0' {
+                        return Err(Error::new(
+                            format!("Unterminated string"),
+                            TextSpan::new(starting_index, current_index),
+                        ));
+                    }
+
+                    current_index += 1;
+                }
+                tokens.push(Token::new(
+                    TokenKind::String,
+                    source_code[starting_index + 1..current_index - 1]
+                        .iter()
+                        .collect(),
+                    TextSpan::new(starting_index, current_index),
+                ));
+            }
+
             _ => {
                 if current_char.is_alphabetic() || current_char == '_' {
                     while source_code[current_index].is_alphanumeric()
@@ -254,6 +278,29 @@ mod tests {
             assert_eq!(
                 token.lexeme,
                 source_code[token.text_span.starting_index..token.text_span.ending_index]
+                    .to_string()
+            );
+        }
+    }
+
+    #[test]
+    fn test_tokenize_with_string_token() {
+        let source_code = "\"hello, world!\"";
+        let expected_tokens = vec![
+            Token::new(
+                TokenKind::String,
+                "hello, world!".to_string(),
+                TextSpan::new(0, 15),
+            ),
+            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(15, 16)),
+        ];
+        let tokens = tokenize(source_code).unwrap();
+        assert_eq!(tokens, expected_tokens);
+        for i in 0..expected_tokens.len() - 1 {
+            let token = &tokens[i];
+            assert_eq!(
+                token.lexeme,
+                source_code[token.text_span.starting_index + 1..token.text_span.ending_index - 1]
                     .to_string()
             );
         }
