@@ -32,6 +32,11 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                 source_code[starting_index..current_index].iter().collect(),
                 TextSpan::new(starting_index, current_index),
             )),
+            '.' => tokens.push(Token::new(
+                TokenKind::Dot,
+                source_code[starting_index..current_index].iter().collect(),
+                TextSpan::new(starting_index, current_index),
+            )),
 
             '(' => tokens.push(Token::new(
                 TokenKind::OpenParen,
@@ -221,7 +226,7 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                         lexeme,
                         TextSpan::new(starting_index, current_index),
                     ));
-                } else if current_char.is_ascii_digit() || current_char == '.' {
+                } else if current_char.is_ascii_digit() {
                     while source_code[current_index].is_ascii_digit()
                         || source_code[current_index] == '.'
                     {
@@ -234,7 +239,7 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                     ));
                 } else {
                     return Err(Error::new(
-                        format!("Invalid character '{current_char}'"),
+                        format!("Unexpected character '{current_char}'"),
                         TextSpan::new(starting_index, current_index),
                     ));
                 }
@@ -329,7 +334,7 @@ mod tests {
 
     #[test]
     fn test_tokenize_with_single_and_double_character_tokens() {
-        let source_code = "=(+-*/)!&&&|||><>=<===!={}:,";
+        let source_code = "=(+-*/)!&&&|||><>=<===!={}:,.";
         let expected_tokens = vec![
             Token::new(TokenKind::Equal, "=".to_string(), TextSpan::new(0, 1)),
             Token::new(TokenKind::OpenParen, "(".to_string(), TextSpan::new(1, 2)),
@@ -381,7 +386,8 @@ mod tests {
             ),
             Token::new(TokenKind::Colon, ":".to_string(), TextSpan::new(26, 27)),
             Token::new(TokenKind::Comma, ",".to_string(), TextSpan::new(27, 28)),
-            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(28, 29)),
+            Token::new(TokenKind::Dot, ".".to_string(), TextSpan::new(28, 29)),
+            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(29, 30)),
         ];
         let tokens = tokenize(source_code).unwrap();
         assert_eq!(tokens, expected_tokens);

@@ -20,7 +20,7 @@ impl fmt::Display for Value {
                 } else {
                     writeln!(f, "{{")?;
                     for (key, value) in o.iter() {
-                        writeln!(f, "\t{key}: {value}")?;
+                        writeln!(f, "  {key} : {value}")?;
                     }
                     write!(f, "}}")
                 }

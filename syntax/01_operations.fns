@@ -15,3 +15,7 @@ true && false || !true
 
 // string concatenation
 "foo" + "bar"
+
+// access operation
+let fns = {wip: true}
+fns.wip

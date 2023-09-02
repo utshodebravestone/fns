@@ -51,6 +51,7 @@ pub enum Expression {
     Numeric(NumericLiteralExpression),
     String(StringLiteralExpression),
     Object(ObjectLiteralExpression),
+    Access(AccessExpression),
     Identifier(IdentifierExpression),
     Unary(UnaryExpression),
     Binary(BinaryExpression),
@@ -65,6 +66,7 @@ impl Expression {
             Expression::Numeric(n) => n.text_span(),
             Expression::String(s) => s.text_span(),
             Expression::Object(o) => o.text_span(),
+            Expression::Access(a) => a.text_span(),
             Expression::Identifier(i) => i.text_span(),
             Expression::Unary(u) => u.text_span(),
             Expression::Binary(b) => b.text_span(),
@@ -147,6 +149,25 @@ impl IdentifierExpression {
 
     pub fn text_span(&self) -> TextSpan {
         self.identifier.text_span.clone()
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AccessExpression {
+    pub object: Token,
+    pub property: Token,
+}
+
+impl AccessExpression {
+    pub fn new(object: Token, property: Token) -> Self {
+        Self { object, property }
+    }
+
+    pub fn text_span(&self) -> TextSpan {
+        TextSpan::add(
+            self.object.text_span.clone(),
+            self.property.text_span.clone(),
+        )
     }
 }
 

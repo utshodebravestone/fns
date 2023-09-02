@@ -19,6 +19,7 @@ pub enum TokenKind {
 
     Colon,
     Comma,
+    Dot,
 
     OpenParen,
     CloseParen,
@@ -75,6 +76,7 @@ impl fmt::Display for TokenKind {
 
             TokenKind::Colon => write!(f, ":"),
             TokenKind::Comma => write!(f, ","),
+            TokenKind::Dot => write!(f, "."),
 
             TokenKind::OpenParen => write!(f, "("),
             TokenKind::CloseParen => write!(f, ")"),

@@ -57,7 +57,6 @@ fn evaluate_expression(
         Expression::Numeric(n) => Ok(Value::Number(n.value)),
         Expression::String(s) => Ok(Value::String(s.value.clone())),
         Expression::Object(o) => {
-            // TODO: Make this code functional using iterator and iterator methods.
             let mut pairs = vec![];
             for pair in &o.pairs {
                 pairs.push((
@@ -66,6 +65,36 @@ fn evaluate_expression(
                 ));
             }
             Ok(Value::Object(HashMap::from_iter(pairs)))
+        }
+        Expression::Access(a) => {
+            if let Some(value) = environment.access(&a.object.lexeme) {
+                if let Value::Object(object) = value {
+                    if let Some(value) = object.get(&a.property.lexeme) {
+                        Ok(*value.clone())
+                    } else {
+                        Err(Error::new(
+                            format!(
+                                "Can't access the property '{}' as it's not defined",
+                                a.property.lexeme
+                            ),
+                            a.text_span(),
+                        ))
+                    }
+                } else {
+                    Err(Error::new(
+                        format!("Can't access property of '{}' ", value),
+                        a.text_span(),
+                    ))
+                }
+            } else {
+                Err(Error::new(
+                    format!(
+                        "Can't access the variable '{}' as it's not defined",
+                        a.object.lexeme
+                    ),
+                    a.text_span(),
+                ))
+            }
         }
         Expression::Identifier(i) => {
             if let Some(value) = environment.access(&i.identifier.lexeme) {
@@ -355,6 +384,16 @@ mod tests {
             ),
             ("wip".to_string(), Box::new(Value::Boolean(true))),
         ]));
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_access_expression() {
+        let src = "const fns = {wip: true} fns.wip";
+        let expected_value = Value::Boolean(true);
         let tokens = tokenize(src).unwrap();
         let program = parse(tokens).unwrap();
         let (val, _) = evaluate(program, None).unwrap();

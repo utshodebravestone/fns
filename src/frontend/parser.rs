@@ -1,9 +1,9 @@
 use super::{
     ast::{
-        AssignmentExpression, BinaryExpression, BooleanLiteralExpression, ConstStatement,
-        Expression, IdentifierExpression, KeyValuePair, LetStatement, NoneLiteralExpression,
-        NumericLiteralExpression, ObjectLiteralExpression, Program, Statement,
-        StringLiteralExpression, UnaryExpression,
+        AccessExpression, AssignmentExpression, BinaryExpression, BooleanLiteralExpression,
+        ConstStatement, Expression, IdentifierExpression, KeyValuePair, LetStatement,
+        NoneLiteralExpression, NumericLiteralExpression, ObjectLiteralExpression, Program,
+        Statement, StringLiteralExpression, UnaryExpression,
     },
     token::{Token, TokenKind},
     utils::Error,
@@ -278,11 +278,7 @@ fn parse_primary_expression(
         TokenKind::Number => Ok((
             Expression::Numeric(NumericLiteralExpression::new(
                 tokens[current_token_index].clone(),
-                if tokens[current_token_index].lexeme == "." {
-                    0.0
-                } else {
-                    tokens[current_token_index].lexeme.parse().unwrap()
-                },
+                tokens[current_token_index].lexeme.parse().unwrap(),
             )),
             current_token_index + 1,
         )),
@@ -318,12 +314,29 @@ fn parse_primary_expression(
                 current_token_index,
             ))
         }
-        TokenKind::Identifier => Ok((
-            Expression::Identifier(IdentifierExpression::new(
-                tokens[current_token_index].clone(),
-            )),
-            current_token_index + 1,
-        )),
+        TokenKind::Identifier => {
+            if tokens.get(current_token_index + 1).is_some()
+                && tokens[current_token_index + 1].kind == TokenKind::Dot
+            {
+                let (object, current_token_index) =
+                    expect_to_match(tokens, current_token_index, TokenKind::Identifier)?;
+                let (_, current_token_index) =
+                    expect_to_match(tokens, current_token_index, TokenKind::Dot)?;
+                let (property, current_token_index) =
+                    expect_to_match(tokens, current_token_index, TokenKind::Identifier)?;
+                Ok((
+                    Expression::Access(AccessExpression::new(object, property)),
+                    current_token_index,
+                ))
+            } else {
+                Ok((
+                    Expression::Identifier(IdentifierExpression::new(
+                        tokens[current_token_index].clone(),
+                    )),
+                    current_token_index + 1,
+                ))
+            }
+        }
         _ => Err(Error::new(
             format!("Unexpected token '{}'", tokens[current_token_index].lexeme),
             tokens[current_token_index].text_span.clone(),
@@ -372,9 +385,10 @@ fn eat_token(tokens: &[Token], current_token_index: usize) -> (Token, usize) {
 mod tests {
     use crate::frontend::{
         ast::{
-            AssignmentExpression, BinaryExpression, BooleanLiteralExpression, ConstStatement,
-            Expression, IdentifierExpression, KeyValuePair, LetStatement, NumericLiteralExpression,
-            ObjectLiteralExpression, Statement, StringLiteralExpression, UnaryExpression,
+            AccessExpression, AssignmentExpression, BinaryExpression, BooleanLiteralExpression,
+            ConstStatement, Expression, IdentifierExpression, KeyValuePair, LetStatement,
+            NumericLiteralExpression, ObjectLiteralExpression, Statement, StringLiteralExpression,
+            UnaryExpression,
         },
         parser::{
             parse_assignment_expression, parse_binary_expression, parse_const_statement,
@@ -779,6 +793,29 @@ mod tests {
                 TextSpan::new(0, 1),
             ))),
             1,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_primary_expression(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_access_expression() {
+        let source_code = "lang.name";
+        let expected_output = (
+            Expression::Access(AccessExpression::new(
+                Token::new(
+                    TokenKind::Identifier,
+                    "lang".to_string(),
+                    TextSpan::new(0, 4),
+                ),
+                Token::new(
+                    TokenKind::Identifier,
+                    "name".to_string(),
+                    TextSpan::new(5, 9),
+                ),
+            )),
+            3,
         );
         let tokens = tokenize(source_code).unwrap();
         let output = parse_primary_expression(&tokens, 0).unwrap();
