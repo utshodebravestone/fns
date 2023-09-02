@@ -8,3 +8,6 @@ false
 
 // string
 "fns for fun, fun, functions"
+
+// object
+{name: "fns", paradigm: "functional", wip: true}

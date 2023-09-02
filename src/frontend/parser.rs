@@ -1,8 +1,9 @@
 use super::{
     ast::{
         AssignmentExpression, BinaryExpression, BooleanLiteralExpression, ConstStatement,
-        Expression, IdentifierExpression, LetStatement, NoneLiteralExpression,
-        NumericLiteralExpression, Program, Statement, StringLiteralExpression, UnaryExpression,
+        Expression, IdentifierExpression, KeyValuePair, LetStatement, NoneLiteralExpression,
+        NumericLiteralExpression, ObjectLiteralExpression, Program, Statement,
+        StringLiteralExpression, UnaryExpression,
     },
     token::{Token, TokenKind},
     utils::Error,
@@ -277,7 +278,11 @@ fn parse_primary_expression(
         TokenKind::Number => Ok((
             Expression::Numeric(NumericLiteralExpression::new(
                 tokens[current_token_index].clone(),
-                tokens[current_token_index].lexeme.parse().unwrap(),
+                if tokens[current_token_index].lexeme == "." {
+                    0.0
+                } else {
+                    tokens[current_token_index].lexeme.parse().unwrap()
+                },
             )),
             current_token_index + 1,
         )),
@@ -288,6 +293,31 @@ fn parse_primary_expression(
             )),
             current_token_index + 1,
         )),
+        TokenKind::OpenBrace => {
+            let (open_brace, current_token_index) =
+                expect_to_match(tokens, current_token_index, TokenKind::OpenBrace)?;
+            let mut pairs = vec![];
+            let mut global_current_token_index = current_token_index;
+            while tokens[current_token_index].kind != TokenKind::CloseBrace {
+                let current_token_index = global_current_token_index;
+                let (pair, current_token_index) =
+                    parse_key_value_pair(tokens, current_token_index)?;
+                pairs.push(pair);
+                if tokens[current_token_index].kind == TokenKind::CloseBrace {
+                    global_current_token_index = current_token_index;
+                    break;
+                }
+                let (_, current_token_index) =
+                    expect_to_match(tokens, current_token_index, TokenKind::Comma)?;
+                global_current_token_index = current_token_index;
+            }
+            let (close_brace, current_token_index) =
+                expect_to_match(tokens, global_current_token_index, TokenKind::CloseBrace)?;
+            Ok((
+                Expression::Object(ObjectLiteralExpression::new(open_brace, pairs, close_brace)),
+                current_token_index,
+            ))
+        }
         TokenKind::Identifier => Ok((
             Expression::Identifier(IdentifierExpression::new(
                 tokens[current_token_index].clone(),
@@ -299,6 +329,17 @@ fn parse_primary_expression(
             tokens[current_token_index].text_span.clone(),
         )),
     }
+}
+
+fn parse_key_value_pair(
+    tokens: &[Token],
+    current_token_index: usize,
+) -> Result<(KeyValuePair, usize), Error> {
+    let (key, current_token_index) =
+        expect_to_match(tokens, current_token_index, TokenKind::Identifier)?;
+    let (_, current_token_index) = expect_to_match(tokens, current_token_index, TokenKind::Colon)?;
+    let (value, current_token_index) = parse_expression(tokens, current_token_index)?;
+    Ok((KeyValuePair::new(key, value), current_token_index))
 }
 
 fn token_matches(token_kind: &TokenKind, expected_to_be_in: &[TokenKind]) -> bool {
@@ -332,12 +373,13 @@ mod tests {
     use crate::frontend::{
         ast::{
             AssignmentExpression, BinaryExpression, BooleanLiteralExpression, ConstStatement,
-            Expression, IdentifierExpression, LetStatement, NumericLiteralExpression, Statement,
-            StringLiteralExpression, UnaryExpression,
+            Expression, IdentifierExpression, KeyValuePair, LetStatement, NumericLiteralExpression,
+            ObjectLiteralExpression, Statement, StringLiteralExpression, UnaryExpression,
         },
         parser::{
             parse_assignment_expression, parse_binary_expression, parse_const_statement,
-            parse_let_statement, parse_primary_expression, parse_unary_expression,
+            parse_key_value_pair, parse_let_statement, parse_primary_expression,
+            parse_unary_expression,
         },
         token::{Token, TokenKind},
         tokenizer::tokenize,
@@ -685,6 +727,49 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_primary_object_expression() {
+        let source_code = "{name: \"fns\", works: true}";
+        let expected_output = (
+            Expression::Object(ObjectLiteralExpression::new(
+                Token::new(TokenKind::OpenBrace, "{".to_string(), TextSpan::new(0, 1)),
+                vec![
+                    KeyValuePair::new(
+                        Token::new(
+                            TokenKind::Identifier,
+                            "name".to_string(),
+                            TextSpan::new(1, 5),
+                        ),
+                        Expression::String(StringLiteralExpression::new(
+                            Token::new(TokenKind::String, "fns".to_string(), TextSpan::new(7, 12)),
+                            "fns".to_string(),
+                        )),
+                    ),
+                    KeyValuePair::new(
+                        Token::new(
+                            TokenKind::Identifier,
+                            "works".to_string(),
+                            TextSpan::new(14, 19),
+                        ),
+                        Expression::Boolean(BooleanLiteralExpression::new(
+                            Token::new(TokenKind::True, "true".to_string(), TextSpan::new(21, 25)),
+                            true,
+                        )),
+                    ),
+                ],
+                Token::new(
+                    TokenKind::CloseBrace,
+                    "}".to_string(),
+                    TextSpan::new(25, 26),
+                ),
+            )),
+            9,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_primary_expression(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
     fn test_parse_primary_identifier_expression() {
         let source_code = "a";
         let expected_output = (
@@ -697,6 +782,28 @@ mod tests {
         );
         let tokens = tokenize(source_code).unwrap();
         let output = parse_primary_expression(&tokens, 0).unwrap();
+        assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_parse_key_value_pair() {
+        let source_code = "works: true";
+        let expected_output = (
+            KeyValuePair::new(
+                Token::new(
+                    TokenKind::Identifier,
+                    "works".to_string(),
+                    TextSpan::new(0, 5),
+                ),
+                Expression::Boolean(BooleanLiteralExpression::new(
+                    Token::new(TokenKind::True, "true".to_string(), TextSpan::new(7, 11)),
+                    true,
+                )),
+            ),
+            3,
+        );
+        let tokens = tokenize(source_code).unwrap();
+        let output = parse_key_value_pair(&tokens, 0).unwrap();
         assert_eq!(expected_output, output);
     }
 }

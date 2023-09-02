@@ -22,6 +22,17 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                 TextSpan::new(starting_index, current_index),
             )),
 
+            ':' => tokens.push(Token::new(
+                TokenKind::Colon,
+                source_code[starting_index..current_index].iter().collect(),
+                TextSpan::new(starting_index, current_index),
+            )),
+            ',' => tokens.push(Token::new(
+                TokenKind::Comma,
+                source_code[starting_index..current_index].iter().collect(),
+                TextSpan::new(starting_index, current_index),
+            )),
+
             '(' => tokens.push(Token::new(
                 TokenKind::OpenParen,
                 source_code[starting_index..current_index].iter().collect(),
@@ -29,6 +40,16 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
             )),
             ')' => tokens.push(Token::new(
                 TokenKind::CloseParen,
+                source_code[starting_index..current_index].iter().collect(),
+                TextSpan::new(starting_index, current_index),
+            )),
+            '{' => tokens.push(Token::new(
+                TokenKind::OpenBrace,
+                source_code[starting_index..current_index].iter().collect(),
+                TextSpan::new(starting_index, current_index),
+            )),
+            '}' => tokens.push(Token::new(
+                TokenKind::CloseBrace,
                 source_code[starting_index..current_index].iter().collect(),
                 TextSpan::new(starting_index, current_index),
             )),
@@ -170,7 +191,7 @@ pub fn tokenize(source_code: &str) -> Result<Vec<Token>, Error> {
                     }
                     if source_code[current_index] == '\0' {
                         return Err(Error::new(
-                            format!("Unterminated string"),
+                            "Unterminated string".to_string(),
                             TextSpan::new(starting_index, current_index),
                         ));
                     }
@@ -308,7 +329,7 @@ mod tests {
 
     #[test]
     fn test_tokenize_with_single_and_double_character_tokens() {
-        let source_code = "=(+-*/)!&&&|||><>=<===!=";
+        let source_code = "=(+-*/)!&&&|||><>=<===!={}:,";
         let expected_tokens = vec![
             Token::new(TokenKind::Equal, "=".to_string(), TextSpan::new(0, 1)),
             Token::new(TokenKind::OpenParen, "(".to_string(), TextSpan::new(1, 2)),
@@ -352,7 +373,15 @@ mod tests {
                 "!=".to_string(),
                 TextSpan::new(22, 24),
             ),
-            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(24, 25)),
+            Token::new(TokenKind::OpenBrace, "{".to_string(), TextSpan::new(24, 25)),
+            Token::new(
+                TokenKind::CloseBrace,
+                "}".to_string(),
+                TextSpan::new(25, 26),
+            ),
+            Token::new(TokenKind::Colon, ":".to_string(), TextSpan::new(26, 27)),
+            Token::new(TokenKind::Comma, ",".to_string(), TextSpan::new(27, 28)),
+            Token::new(TokenKind::Eof, "\0".to_string(), TextSpan::new(28, 29)),
         ];
         let tokens = tokenize(source_code).unwrap();
         assert_eq!(tokens, expected_tokens);

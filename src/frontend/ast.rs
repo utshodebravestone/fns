@@ -50,6 +50,7 @@ pub enum Expression {
     Boolean(BooleanLiteralExpression),
     Numeric(NumericLiteralExpression),
     String(StringLiteralExpression),
+    Object(ObjectLiteralExpression),
     Identifier(IdentifierExpression),
     Unary(UnaryExpression),
     Binary(BinaryExpression),
@@ -63,6 +64,7 @@ impl Expression {
             Expression::Boolean(b) => b.text_span(),
             Expression::Numeric(n) => n.text_span(),
             Expression::String(s) => s.text_span(),
+            Expression::Object(o) => o.text_span(),
             Expression::Identifier(i) => i.text_span(),
             Expression::Unary(u) => u.text_span(),
             Expression::Binary(b) => b.text_span(),
@@ -149,6 +151,30 @@ impl IdentifierExpression {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct ObjectLiteralExpression {
+    pub open_brace: Token,
+    pub pairs: Vec<KeyValuePair>,
+    pub close_brace: Token,
+}
+
+impl ObjectLiteralExpression {
+    pub fn new(open_brace: Token, pairs: Vec<KeyValuePair>, close_brace: Token) -> Self {
+        Self {
+            open_brace,
+            pairs,
+            close_brace,
+        }
+    }
+
+    pub fn text_span(&self) -> TextSpan {
+        TextSpan::add(
+            self.open_brace.text_span.clone(),
+            self.close_brace.text_span.clone(),
+        )
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub struct StringLiteralExpression {
     pub string: Token,
     pub value: String,
@@ -208,5 +234,17 @@ impl NoneLiteralExpression {
 
     pub fn text_span(&self) -> TextSpan {
         self.none.text_span.clone()
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct KeyValuePair {
+    pub key: Token,
+    pub value: Expression,
+}
+
+impl KeyValuePair {
+    pub fn new(key: Token, value: Expression) -> Self {
+        Self { key, value }
     }
 }

@@ -17,8 +17,13 @@ pub enum TokenKind {
     False,
     None,
 
+    Colon,
+    Comma,
+
     OpenParen,
     CloseParen,
+    OpenBrace,
+    CloseBrace,
 
     Plus,
     Minus,
@@ -68,8 +73,13 @@ impl fmt::Display for TokenKind {
             TokenKind::False => write!(f, "false"),
             TokenKind::None => write!(f, "none"),
 
+            TokenKind::Colon => write!(f, ":"),
+            TokenKind::Comma => write!(f, ","),
+
             TokenKind::OpenParen => write!(f, "("),
             TokenKind::CloseParen => write!(f, ")"),
+            TokenKind::OpenBrace => write!(f, "{{"),
+            TokenKind::CloseBrace => write!(f, "}}"),
 
             TokenKind::Plus => write!(f, "+"),
             TokenKind::Minus => write!(f, "-"),

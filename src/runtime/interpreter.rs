@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::frontend::{
     ast::{ConstStatement, Expression, LetStatement, Program, Statement},
     token::TokenKind,
@@ -54,6 +56,17 @@ fn evaluate_expression(
         Expression::Boolean(b) => Ok(Value::Boolean(b.value)),
         Expression::Numeric(n) => Ok(Value::Number(n.value)),
         Expression::String(s) => Ok(Value::String(s.value.clone())),
+        Expression::Object(o) => {
+            // TODO: Make this code functional using iterator and iterator methods.
+            let mut pairs = vec![];
+            for pair in &o.pairs {
+                pairs.push((
+                    pair.key.lexeme.clone(),
+                    Box::new(evaluate_expression(&pair.value, environment)?),
+                ));
+            }
+            Ok(Value::Object(HashMap::from_iter(pairs)))
+        }
         Expression::Identifier(i) => {
             if let Some(value) = environment.access(&i.identifier.lexeme) {
                 Ok(value)
@@ -165,6 +178,8 @@ fn evaluate_expression(
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::{
         frontend::{parser::parse, tokenizer::tokenize},
         runtime::types::Value,
@@ -320,6 +335,26 @@ mod tests {
 
         let src = "!true";
         let expected_value = Value::Boolean(false);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
+    fn test_evaluate_object_expression() {
+        let src = "{name: \"fns\", paradigm: \"functional\", wip: true}";
+        let expected_value = Value::Object(HashMap::from_iter(vec![
+            (
+                "name".to_string(),
+                Box::new(Value::String("fns".to_string())),
+            ),
+            (
+                "paradigm".to_string(),
+                Box::new(Value::String("functional".to_string())),
+            ),
+            ("wip".to_string(), Box::new(Value::Boolean(true))),
+        ]));
         let tokens = tokenize(src).unwrap();
         let program = parse(tokens).unwrap();
         let (val, _) = evaluate(program, None).unwrap();
