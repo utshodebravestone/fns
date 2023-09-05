@@ -67,30 +67,24 @@ fn evaluate_expression(
             Ok(Value::Object(HashMap::from_iter(pairs)))
         }
         Expression::Access(a) => {
-            if let Some(value) = environment.access(&a.object.lexeme) {
-                if let Value::Object(object) = value {
-                    if let Some(value) = object.get(&a.property.lexeme) {
-                        Ok(*value.clone())
-                    } else {
-                        Err(Error::new(
-                            format!(
-                                "Can't access the property '{}' as it's not defined",
-                                a.property.lexeme
-                            ),
-                            a.text_span(),
-                        ))
-                    }
+            let value = evaluate_expression(&a.object, environment)?;
+            if let Value::Object(object) = value {
+                if let Some(value) = object.get(&a.property.lexeme) {
+                    Ok(*value.clone())
                 } else {
                     Err(Error::new(
-                        format!("Can't access property of '{}' ", value),
+                        format!(
+                            "Can't access the property '{}' as it's not defined",
+                            a.property.lexeme
+                        ),
                         a.text_span(),
                     ))
                 }
             } else {
                 Err(Error::new(
                     format!(
-                        "Can't access the variable '{}' as it's not defined",
-                        a.object.lexeme
+                        "Can't access property of '{}' as it's not accessible",
+                        value
                     ),
                     a.text_span(),
                 ))
@@ -371,6 +365,16 @@ mod tests {
     }
 
     #[test]
+    fn test_evaluate_access_expression() {
+        let src = "{wip: true}.wip";
+        let expected_value = Value::Boolean(true);
+        let tokens = tokenize(src).unwrap();
+        let program = parse(tokens).unwrap();
+        let (val, _) = evaluate(program, None).unwrap();
+        assert_eq!(val, expected_value);
+    }
+
+    #[test]
     fn test_evaluate_object_expression() {
         let src = "{name: \"fns\", paradigm: \"functional\", wip: true}";
         let expected_value = Value::Object(HashMap::from_iter(vec![
@@ -384,16 +388,6 @@ mod tests {
             ),
             ("wip".to_string(), Box::new(Value::Boolean(true))),
         ]));
-        let tokens = tokenize(src).unwrap();
-        let program = parse(tokens).unwrap();
-        let (val, _) = evaluate(program, None).unwrap();
-        assert_eq!(val, expected_value);
-    }
-
-    #[test]
-    fn test_evaluate_access_expression() {
-        let src = "const fns = {wip: true} fns.wip";
-        let expected_value = Value::Boolean(true);
         let tokens = tokenize(src).unwrap();
         let program = parse(tokens).unwrap();
         let (val, _) = evaluate(program, None).unwrap();

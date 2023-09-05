@@ -154,18 +154,21 @@ impl IdentifierExpression {
 
 #[derive(Debug, PartialEq)]
 pub struct AccessExpression {
-    pub object: Token,
+    pub object: Box<Expression>,
     pub property: Token,
 }
 
 impl AccessExpression {
-    pub fn new(object: Token, property: Token) -> Self {
-        Self { object, property }
+    pub fn new(object: Expression, property: Token) -> Self {
+        Self {
+            object: Box::new(object),
+            property,
+        }
     }
 
     pub fn text_span(&self) -> TextSpan {
         TextSpan::add(
-            self.object.text_span.clone(),
+            self.object.text_span().clone(),
             self.property.text_span.clone(),
         )
     }
