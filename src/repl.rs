@@ -2,7 +2,7 @@ use std::io::{stdin, stdout, Write};
 
 use crate::{
     frontend::{parser::parse, tokenizer::tokenize, utils::Error},
-    runtime::{environment::Environment, interpreter::evaluate},
+    runtime::{environment::Environment, evaluator::evaluate},
 };
 
 pub fn repl() {

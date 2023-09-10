@@ -5,7 +5,7 @@ mod runtime;
 use std::{env::args, fs::read_to_string, process::exit};
 
 use frontend::utils::Error;
-use runtime::interpreter::evaluate;
+use runtime::evaluator::evaluate;
 
 use crate::{
     frontend::{parser::parse, tokenizer::tokenize},

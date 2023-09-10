@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::types::Value;
+use super::{builtin::get_builtin, types::Value};
 
 #[derive(Debug, Clone)]
 pub struct Environment {
@@ -12,7 +12,10 @@ impl Environment {
     pub fn new(parent: Option<Self>) -> Self {
         Self {
             parent: Box::new(parent),
-            variables: HashMap::new(),
+            variables: get_builtin()
+                .iter()
+                .map(|(key, value)| (key.clone(), (value.clone(), true)))
+                .collect(),
         }
     }
 
