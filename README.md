@@ -1,4 +1,4 @@
-# fns
+# fns (Abandoned)
 
 A Functional, Declarative, Dynamic Programming Language
 
